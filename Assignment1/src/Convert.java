@@ -45,6 +45,8 @@ public class Convert {
 
         return result;
     }
+    // Method: Add powers of 2
+    //
     //The algorithm that I used is taking the highest bit value and subtract any true bit
     // value from it if the highest bit value is a 1 using the Math.pow(2,i) where I is the
     // index where its element is 1.
@@ -140,15 +142,23 @@ public class Convert {
                 }
         }
 
-         return binary;
-        }
-    // The algorithm that I used, if the decimal is positive, I find the closest binary value
-    // that is still less that theDecimal. I subtract that value from the Decimal and
-    // place a 1 at the position of which the binary value was used. So if 32 was used to
-    // subtract from 61, then I put 1 in the binary position for 32.
-    //The algorithm that I used for when the Decimal is negative, insert a 1 for every binary
-    // value that is greater than the absolute value of the Decimal. I then subtract the
-    // Decimal from the lowest binary value that is greater than the Decimal. I then check
+        return binary;
+    }
+
+    // Method: Subtract Power of 2.
+    //
+    // The algorithm that I used is,
+    // if the decimal is positive, I find the closest binary value
+    // that is still less than the Decimal.
+    // Then I subtract that value from the Decimal and
+    // place a 1 at the position of which the binary value was used.
+    // So if 32 (2^5) was used to
+    // subtract from 61, then I put 1 in the binary position for 32 (2^5).
+    // The algorithm that I used for when the Decimal is negative, insert a 1 for every binary
+    // value that is greater than the absolute value of the Decimal.
+    // I then subtract the
+    // Decimal from the lowest binary value that is greater than the Decimal.
+    // I then check
     // the next lowest binary value to see if it's smaller than the Decimal, if it is, I
     // subtract that binary value from the Decimal and repeat the process.
 
