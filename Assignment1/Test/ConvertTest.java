@@ -2,6 +2,8 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import org.junit.jupiter.api.function.Executable;
 
 /**
  * Unit tests of the methods in the Convert class.
@@ -104,16 +106,12 @@ public class ConvertTest {
     public void test2sCompDoesNotChangeNegParameter() {
         final char[] data = {'1', '0', '0', '0', '0', '0', '0', '0',
                              '0', '0', '0', '0', '0', '0', '0', '0'};
-        int decimal = Convert.convert2sCompToDecimal(data);
-        final char[] dataClone = Convert.convertDecimalTo2sComp(decimal);
-        assertArrayEquals(data, dataClone);
 
-        //I did see that the test was testing to check if the clone was equal to the data
-        // without actually doing anything to either the clone or data since originally
-        // dataClone = data.clone(); and the test was checking if dataClone and data were
-        // equal. So I changed this test method so that it would run the data through the
-        // decimal converter and then through the binary converter to check if the data
-        // remained consistent.
+        final char[] dataClone = data.clone();
+
+        Convert.convert2sCompToDecimal(data);
+
+        assertArrayEquals(dataClone, data);
     }
     
     /**
