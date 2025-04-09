@@ -104,9 +104,8 @@ public class ConvertTest {
     public void test2sCompDoesNotChangeNegParameter() {
         final char[] data = {'1', '0', '0', '0', '0', '0', '0', '0',
                              '0', '0', '0', '0', '0', '0', '0', '0'};
-        char[] dataClone;
         int decimal = Convert.convert2sCompToDecimal(data);
-        dataClone = Convert.convertDecimalTo2sComp(decimal);
+        final char[] dataClone = Convert.convertDecimalTo2sComp(decimal);
         assertArrayEquals(data, dataClone);
 
         //I did see that the test was testing to check if the clone was equal to the data
@@ -141,7 +140,7 @@ public class ConvertTest {
         );
     }
     
-    
+
     // Decimal to Binary
     
     /**
