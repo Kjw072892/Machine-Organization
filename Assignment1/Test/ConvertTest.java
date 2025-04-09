@@ -5,9 +5,11 @@ import org.junit.Test;
 
 /**
  * Unit tests of the methods in the Convert class.
+ *
  * 
  * @author Alan Fowler
- * @version 1.2
+ * @version 1.3
+ * @apiNote  Refactored the Test class to be compatible with intellij file systems.
  */
 public class ConvertTest {
 
