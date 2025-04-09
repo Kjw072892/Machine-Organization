@@ -88,7 +88,7 @@ public class ConvertTest {
      * Test method for {@link Convert#convert2sCompToDecimal(char[])}.
      */
     @Test
-    public void test2sCompDoesNotChangePosParmaeter() {
+    public void test2sCompDoesNotChangePosParameter() {
         final char[] data = {'0', '1', '1', '1', '1', '1', '1', '1',
                              '1', '1', '1', '1', '1', '1', '1', '1'};
         final char[] dataClone = data.clone();
@@ -101,7 +101,7 @@ public class ConvertTest {
      * Test method for {@link Convert#convert2sCompToDecimal(char[])}.
      */
     @Test
-    public void test2sCompDoesNotChangeNegParmaeter() {
+    public void test2sCompDoesNotChangeNegParameter() {
         final char[] data = {'1', '0', '0', '0', '0', '0', '0', '0',
                              '0', '0', '0', '0', '0', '0', '0', '0'};
         final char[] dataClone = data.clone();
@@ -117,9 +117,8 @@ public class ConvertTest {
         final char[] data = {'0', '1', '1', '1', '1', '1', '1', '1',
                              '1', '1', '1', '1', '1', '1', '1', '1', '1'};
         
-        assertThrows(IllegalArgumentException.class, () -> {
-            Convert.convert2sCompToDecimal(data);
-        });
+        assertThrows(IllegalArgumentException.class, () ->
+                Convert.convert2sCompToDecimal(data));
     }
     
     /**
@@ -129,9 +128,9 @@ public class ConvertTest {
     public void test2sCompMinIllegalNeg17BitValue() {
         final char[] data = {'1', '0', '0', '0', '0', '0', '0', '0',
                              '0', '0', '0', '0', '0', '0', '0', '0', '0'};
-        assertThrows(IllegalArgumentException.class, () -> {
-            Convert.convert2sCompToDecimal(data);
-        });
+        assertThrows(IllegalArgumentException.class, () ->
+            Convert.convert2sCompToDecimal(data)
+        );
     }
     
     
@@ -209,9 +208,9 @@ public class ConvertTest {
     @Test
     public void testConvertDecimalTo2sCompIllegalPositiveMAX() {
         final int data = 32768;
-        assertThrows(IllegalArgumentException.class, () -> {
-            Convert.convertDecimalTo2sComp(data);
-        });
+        assertThrows(IllegalArgumentException.class, () ->
+            Convert.convertDecimalTo2sComp(data)
+        );
     }
     
     /**
@@ -220,9 +219,9 @@ public class ConvertTest {
     @Test
     public void testConvertDecimalTo2sCompIllegalNegativeMAX() {
         final int data = -32769;
-        assertThrows(IllegalArgumentException.class, () -> {
-            Convert.convertDecimalTo2sComp(data);
-        });
+        assertThrows(IllegalArgumentException.class, () ->
+                Convert.convertDecimalTo2sComp(data)
+        );
     }
 
 
