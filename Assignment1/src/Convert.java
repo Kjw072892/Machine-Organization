@@ -2,7 +2,7 @@
  * Converts 2's complement binary up to 16-bits into a signed decimal.
  * Also converts a signed decimal into 2's complement binary.
  * @author Kassie Whitney
- * @version 4/8/25
+ * @version 4/10/25
  */
 
 public class Convert {
@@ -17,9 +17,12 @@ public class Convert {
      * @param theBits an array representing the bits in a two's complement number
      * @throws IllegalArgumentException if the length of the parameter array > 16.
      * @return the decimal equivalent of the two's complement parameter
+     * @apiNote Time Complexity: O(n)
      */
     public static int convert2sCompToDecimal(final char[] theBits) {
         int result = 0;
+
+        //Checks if the most significant bit is a 1.
         boolean isNegative = theBits[0] == '1';
 
         if(theBits.length > 16) {
@@ -28,6 +31,9 @@ public class Convert {
 
         for(int i = 0; i < theBits.length; i++) {
             if(isNegative) {
+
+                //the result begins at the most significant bit decimal value and turns it
+                // negative.
                 result = -1 * (int)Math.pow(2, theBits.length - 1);
                 isNegative = false;
                 continue;
@@ -39,7 +45,7 @@ public class Convert {
                 // 2^(theBit.length - (0 + 1)) [starting value: 2^15].
                 // 2^(theBit.length - (theBit.length - 1 + 1) [Last value: 2^0];
 
-               result += (int) Math.pow(2, theBits.length -  (i + 1));
+               result += (int) Math.pow(2, theBits.length - (i + 1));
             }
         }
 
@@ -63,19 +69,23 @@ public class Convert {
     * @param theDecimal the decimal number to convert to two's complement
     * @throws IllegalArgumentException if the parameter cannot be represented in 16 bits.
     * @return a 16-bit two's complement equivalent of the decimal parameter.
+    * @apiNote Time Complexity: O(n).
     */
     public static char[] convertDecimalTo2sComp(final int theDecimal) {
         int tempDecimal = theDecimal;
 
+        int bitWidth = 16;
+
         boolean isOdd = theDecimal % 2 == 1 || theDecimal % 2 == -1;
 
-        char[] binary = new char[16];
-        int index = (int) Math.pow(2, 15);
+        char[] binary = new char[bitWidth];
 
-        //checks if the theDecimal is valid.
-        if (theDecimal >= (int) Math.pow(2, 15)
-                || theDecimal <= -1 * (int) Math.pow(2, 15) - 1) {
-            throw new IllegalArgumentException("theDecimal exceeds the the limit!");
+        int maxBinDecimal = (int) Math.pow(2, (bitWidth - 1));
+
+        //checks if the theDecimal is at most 16-bits.
+        if (theDecimal > ((int) Math.pow(2, (bitWidth - 1))) - 1 //32767
+                || theDecimal < -1 * (int) Math.pow(2, (bitWidth - 1))) { //-32768
+            throw new IllegalArgumentException("theDecimal exceeds the limit!");
         }
 
         //Checks if theDecimal is positive.
@@ -86,14 +96,19 @@ public class Convert {
                 binary[15] = '1';
                 tempDecimal -= 1;
             }
+
             for(int i = 0; i < binary.length; i++) {
-                //Checks if the next binary value (index) is less than theDecimal.
-                if (index > 1 && tempDecimal >= index) {
-                    binary[15 - log2(index)] = '1'; //Adds the bits from right to left.
-                    tempDecimal -= index;
+                //Checks if the next binary decimal value
+                // (maxBinDecimal) is less than theDecimal.
+                if (maxBinDecimal > 1 && tempDecimal >= maxBinDecimal) {
+
+                    //Appends '1' to the binary array from left to right to denote negative
+                    // 2's complement binary.
+                    binary[(bitWidth - 1) - log2(maxBinDecimal)] = '1';
+                    tempDecimal -= maxBinDecimal;
                 }
-                //Gives us the next binary value.
-                index /= 2;
+                //Gives us the next binary decimal value.
+                maxBinDecimal /= 2;
             }
 
 
@@ -104,33 +119,36 @@ public class Convert {
                 tempDecimal -= 1;
             }
 
+            // Appends '1' to the binary array at the bit position if the bit decimal value,
+            // at the bit current bit position, was used
+            // to subtract from tempDecimal (theDecimal).
             for(int i = 0; i < binary.length; i++) {
 
-                if(index >= (-1 * theDecimal)) {
+                if(maxBinDecimal >= (-1 * tempDecimal)) {
                     binary[i] = '1';
                 }
 
-                if(index/2  < (-1 * tempDecimal)) {
+                if(maxBinDecimal/2  < (-1 * tempDecimal)) {
 
                     break;
                 }
 
-                index /= 2;
+                maxBinDecimal /= 2;
 
             }
             tempDecimal *= -1;
 
-            if(index > tempDecimal) {
-                tempDecimal = index - tempDecimal;
+            if(maxBinDecimal > tempDecimal) {
+                tempDecimal = maxBinDecimal - tempDecimal;
             }
-            while (index > 1) {
+            while (maxBinDecimal > 1) {
 
-                if(index <= tempDecimal) {
-                    tempDecimal -= index;
-                    binary[15 - log2(index)] = '1';
+                if(maxBinDecimal <= tempDecimal) {
+                    tempDecimal -= maxBinDecimal;
+                    binary[(bitWidth - 1) - log2(maxBinDecimal)] = '1';
                 }
 
-                index /= 2;
+                maxBinDecimal /= 2;
 
             }
         }
@@ -145,7 +163,7 @@ public class Convert {
         return binary;
     }
 
-    // Method: Subtract Power of 2.
+    // Method: Subtract Powers of 2.
     //
     // The algorithm that I used is,
     // if the decimal is positive, I find the closest binary value
@@ -163,12 +181,25 @@ public class Convert {
     // subtract that binary value from the Decimal and repeat the process.
 
     /**
-     * Converts log base 10 to log base 2 to get the exponent value.
-     * @param x the binary value you want to retrieve the exponent value of.
-     * @return the exponent value from a base 2 integer.
+     * Converts log base 10 to log base 2 to get the exponent value for power 2 decimal value.
+     * @param x the decimal value you want to extract the exponent value from.
+     * @return the exponent value for power 2.
      */
     private static int log2(final int x) {
         return (int) (Math.log(x) / Math.log(2));
+    }
+
+    private static int bitWidth(final int theDecimal) {
+        int tempDecimal = theDecimal;
+        int bitWidth = 1;
+        if (tempDecimal%2 == 1) {
+                tempDecimal -= 1;
+            }
+        while (tempDecimal < -1) {
+
+
+        }
+        return bitWidth;
     }
 
     public static void main(String[] args) {
