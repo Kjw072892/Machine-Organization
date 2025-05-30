@@ -15,13 +15,13 @@ import java.util.Arrays;
 public class BitString {
 
 	// Constants for range checking
-	private final static int MAX_BITS = 16;
-	private final static int MAX_VALUE = 32767; // 2^15 - 1
-	private final static int MIN_VALUE = -32768; // -2^15
-	private final static int MAX_UNSIGNED_VALUE = 65535; // 2^16 - 1
+	private final static int MAX_BITS = 16; //max number of bits 4 sets x 4 bits
+	private final static int MAX_VALUE = 32767; // 2^15 - 1 [Max positive signed decimal]
+	private final static int MIN_VALUE = -32768; // -2^15 [Max minimum signed decimal]
+	private final static int MAX_UNSIGNED_VALUE = 65535; // 2^16 - 1 [Max decimal unsigned]
 	
 	
-	private char[] myBits;
+	private char[] myBits; //stores the users binary bits max length 16
 	private int myLength;
 
 
@@ -34,12 +34,14 @@ public class BitString {
 		if (theBits == null || theBits.length > MAX_BITS) {
 			throw new IllegalArgumentException("Invalid input: null or exceeds bit string length");
 		}
+
 		myBits = Arrays.copyOf(theBits, theBits.length);
 		myLength = theBits.length;
 	}
 
 	/**
-	 * Flips all the bits of the BitString. 
+	 * Flips all the bits of the BitString.
+	 * Not instruction
 	 */
 	public void invert() {
 		if (myBits == null) {
@@ -55,7 +57,7 @@ public class BitString {
 	}
 
 	/**
-	 * Adds 1 to the BitString. 
+	 * Adds 1 to the least significant bit in the BitString.
 	 */
 	public void addOne() {
 		if (myBits == null) {
@@ -180,7 +182,7 @@ public class BitString {
 
 	/**
 	 * Returns a new BitString that is the result of appending the parameter
-	 * BitString to th end of the current BitString.
+	 * BitString to the end of the current BitString.
 	 *  
 	 * @param other the BitString to append
 	 * @return a new BitString representing the parameter appended to this BitString  
@@ -208,7 +210,6 @@ public class BitString {
 
 	/**
 	 * Returns a substring of the given string. 
-	 * @param source
 	 * @param start
 	 * @param length
 	 * @return A new BitString is created from the source starting at the
