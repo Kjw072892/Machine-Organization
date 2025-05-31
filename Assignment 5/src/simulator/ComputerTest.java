@@ -1,19 +1,16 @@
-/*
- * Unit tests for the Computer class. 
- */
-
 package simulator;
 
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
- * @author Alan Fowler
- * @version 1.3
+ * Junit test for the Computer class
+ * @author KJW0728 (Kassie Whitney)
+ * @version 5.31.25
  */
 class ComputerTest {
 	
@@ -24,10 +21,7 @@ class ComputerTest {
 	void setUp() {
 		myComputer = new Computer();
 	}
-	
-	
-	
-	
+
 	/*
 	 * NOTE:
 	 * Programs in unit tests should ideally have one instruction per line
@@ -39,7 +33,21 @@ class ComputerTest {
 	 */
 	@Test
 	void testExecuteBranch() {
-		fail("Not yet implemented");
+
+		String[] program = {
+				"0000 111 0 0000 0001",//BR pc + 1 (pc = 3)
+				"1111 0000 0010 0101",//TRAP HALT PC = 2
+				"1111 0000 0010 0101"//TRAP HALT PC = 3
+		};
+
+		myComputer.loadMachineCode(program);
+		myComputer.execute();
+
+		assertAll("Testing BR instruction",
+				() -> assertEquals(3, myComputer.getPC().getUnsignedValue(),
+						"PC count should have been 3. The PC offset is wrong!")
+		);
+
 	}
 
 	/**
@@ -47,7 +55,24 @@ class ComputerTest {
 	 */
 	@Test
 	void testExecuteLoad() {
-		fail("Not yet implemented");
+		String[] program = {
+				"0010 000 0 0000 0001",//R0 <- x-39
+				"1111 0000 0010 0101",//TRAP HALT PC = 2
+				"1111 1111 1101 1001",//x-39
+				"0000 0000 0011 1111",//x3f
+		};
+
+		myComputer.loadMachineCode(program);
+		myComputer.execute();
+
+		assertAll("Testing LD instruction",
+				() -> assertEquals(-39, myComputer.getRegisters()[0].get2sCompValue(),
+						"Register 0 should have had -39 loaded into it! But got "
+								+ myComputer.getRegisters()[0].get2sCompValue() + " " +
+								"instead!"),
+				() -> assertArrayEquals(new char[]{'1','0','0'}, myComputer.getCC().getBits(),
+						"Your Condition Code was not updated properly!")
+		);
 	}
 	
 	/**
@@ -55,7 +80,23 @@ class ComputerTest {
 	 */
 	@Test
 	void testExecuteStore() {
-		fail("Not yet implemented");
+		String[] program = {
+				"0011 111 0 0000 0001",//Memory[2] <- R7
+				"1111 0000 0010 0101",//TRAP HALT PC = 2
+				"0000 0000 0011 1001",//x39 (57)
+		};
+
+		myComputer.loadMachineCode(program);
+		myComputer.execute();
+
+		assertAll("Testing ST instruction",
+				() -> assertEquals(7, myComputer.getMemory()[2].get2sCompValue(),
+						"Memory location 2 should have had 7 loaded into it! But got"
+								+ " 57 instead!"),
+				() -> assertArrayEquals(new char[]{'0','1','0'},
+						myComputer.getCC().getBits(),
+						"Your Condition Code was updated unexpectedly!")
+		);
 	}
 
 	/**
@@ -63,7 +104,24 @@ class ComputerTest {
 	 */
 	@Test
 	void testExecuteAnd() {
-		fail("Not yet implemented");
+		String[] program = {
+				"0101 000 110 0 00 111",//R0 <- R6 + R7
+				"1111 0000 0010 0101",//TRAP HALT PC = 2
+		};
+
+		myComputer.loadMachineCode(program);
+		myComputer.execute();
+
+		assertAll("Testing AND instruction",
+				() -> assertEquals(6, myComputer.getRegisters()[0].get2sCompValue(),
+
+
+
+
+						"Your AND instruction is incorrect!"),
+				() -> assertArrayEquals(new char[]{'0','0','1'}, myComputer.getCC().getBits(),
+						"Your Condition Code did not update correctly!")
+		);
 	}
 
 	/**
@@ -71,16 +129,13 @@ class ComputerTest {
 	 */
 	@Test
 	void testExecuteNot5() {
-	
-		//myComputer.display();
-		
 		// NOTE: R5 contains #5 initially when the Computer is instantiated
 		// So, iF we execute R4 <- NOT R5, then R4 should contain 1111 1111 1111 1010    (-6)
 		// AND CC should be 100
 		
-		String program[] = {
-			"1001100101111111",    // R4 <- NOT R5
-			"1111000000100101"     // TRAP - vector x25 - HALT
+		String[] program = {
+			"1001 100 101 111111",    // R4 <- NOT R5
+			"1111 0000 0010 0101"     // TRAP - vector x25 - HALT
 		};
 		
 		myComputer.loadMachineCode(program);
@@ -92,8 +147,7 @@ class ComputerTest {
 		BitString expectedCC = new BitString();
 		expectedCC.setBits("100".toCharArray());
 		assertEquals(expectedCC.get2sCompValue(), myComputer.getCC().get2sCompValue());
-		
-		//myComputer.display();
+
 	}
 	
 	/**
@@ -104,8 +158,8 @@ class ComputerTest {
 	void testExecuteAddR2PlusR2() {
 		
 		String[] program =
-			{"0001000010000010",  // R0 <- R2 + R2 (#4)
-		     "1111000000100101"}; // HALT
+			{"0001 000 010 0 00 010",  // R0 <- R2 + R2 (#4)
+		     "1111 0000 0010 0101"}; // HALT
 		
 		myComputer.loadMachineCode(program);
 		myComputer.execute();
@@ -126,8 +180,8 @@ class ComputerTest {
 	void testExecuteAddR2PlusImm3() {
 		
 		String[] program =
-			{"0001000010100011",  // R0 <- R2 + #3
-		     "1111000000100101"}; // HALT
+			{"0001 000 010 1 00011",  // R0 <- R2 + #3
+		     "1111 0000 0010 0101"}; // HALT
 		
 		myComputer.loadMachineCode(program);
 		myComputer.execute();
@@ -148,8 +202,8 @@ class ComputerTest {
 	void testExecuteAddR2PlusImmNeg3() {
 		
 		String[] program =
-			{"0001000010111101",  // R0 <- R2 + #-3
-		     "1111000000100101"}; // HALT
+			{"0001 000 010 1 11101",  // R0 <- R2 + #-3
+		     "1111 0000 0010 0101"}; // HALT
 		
 		myComputer.loadMachineCode(program);
 		myComputer.execute();

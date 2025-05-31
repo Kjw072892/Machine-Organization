@@ -1,7 +1,5 @@
 package simulator;
 
-import java.util.Locale;
-
 /**
  * The Simulator class is used to load and execute all of the instructions in a machine code program.
  * A sample machine code program is provided which outputs the characters 9 to 1 to the console.
@@ -70,15 +68,17 @@ public class Simulator {
 		
 		
 //		// Here is another program for testing:
-//		String program[] = {
-//		//A program that uses a loop to add 1 + 2 + 3 + 4 + 5 and save the result (15) in RO
-//				"0101000000100000",   //; clear R0 - R0 will be the SUM
-//				"0101001001100000",   //; clear R1 - R1 will be the loop counter
-//				"0001001001100101",   //; R1 <- R1 + 5 : set the loop counter to 5 - result = 15
-//				"0001000000000001",   //; R0 <- R0 + R1 ; add the loop counter value to the sum
-//				"0001001001111111",	  //; decrement the counter
-//				"0000001111111101",   //; BRnzp do it again if the counter is not yet zero
-//				"1111000000100101"};  //; halt - TRAP with vector x25
+		String[] program1 = {
+//		A program that uses a loop to add 1 + 2 + 3 + 4 + 5 and save the result (15) in RO
+				"0101 000 000 1 00000",   //; clear R0 - R0 will be the SUM
+				"0101 001 001 1 00000",   //; clear R1 - R1 will be the loop counter
+				"0001 001 001 1 00101",   //; R1 <- R1 + 5 : set the loop counter to 5 - result
+				// = 15
+				"0001 000 000 0 00 001",   //; R0 <- R0 + R1 ; add the loop counter value to
+				// the sum
+				"0001 001 001 1 11111",	  //; decrement the counter
+				"0000 001 1 1111 1101",   //; BRnzp do it again if the counter is not yet zero
+				"1111 0000 0010 0101"};  //; halt - TRAP with vector x25
 		
 		
 		
@@ -89,47 +89,17 @@ public class Simulator {
 		/* Show the initial configuration of the computer. */
 		//myComputer.display();
 		
-		//myComputer.loadMachineCode(program);
+		myComputer.loadMachineCode(program);
 
 		/* Execute the program. */
 		/* During execution, the only output to the screen should be */
 		/* the result of executing OUT. */
 
-		//myComputer.execute();
+		myComputer.execute();
 		
 		/* Show the final configuration of the computer. */
 		//System.out.println();
-		//myComputer.display();
-
-		//Not
-//		String[] myProgram = {
-//				"1001000000111111",
-//				"1001001001111111",
-//				"1001001001111111",
-//
-//		};
-
-		String[] myProgram = {
-				"1001000000111111",//Not R0 -> CC = 1,0,0
-				"0000100000000011",//Branch + 3 PC
-				"1001000000111111",//Skip not zero
-				"1001000000111111",//skip not zero
-				"1001001001111111",//Skip Not R1 <- CC = 1,0,0
-				"1001000000111111",//Not R0 <- not R0
-				"0001000000101111",//ADD R0 <- R0 + 15
-				"0001000000101111",//ADD R0 <- R0 + 15
-				"0001000000101111",//ADD R0 <- R0 + 15
-				"0001000000101111",//ADD R0 <- R0 + 15
-				"0001000000101111",//ADD R0 <- R0 + 15
-				"0101001000111111",
-				"1111000000100001",//Trap Out output: K decimal 75
-				"1111000000100101"//Trap x25 -> halt
-
-		};
-
-		myComputer.loadMachineCode(myProgram);
-		myComputer.execute();
-		myComputer.display();
+		 //myComputer.display();
 	}
 
 }

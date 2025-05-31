@@ -1,16 +1,14 @@
 package simulator;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Hashtable;
 
 /**
  * The Computer class is composed of registers, memory, PC, IR, and CC.
- * The Computer can execute a program based on the the instructions in memory.
+ * The Computer can execute a program based on the instructions in memory.
  *  
- * @author mmuppa
+ * @author KJW0728 (Kassie Whitney)
  * @author acfowler
- * @version 4.1
+ * @version 5.31.25
  */
 public class Computer {
 
@@ -51,8 +49,43 @@ public class Computer {
 	private final BitString mCC;
 
 	/**
+	 * Destination Register
+	 */
+	private BitString dr;
+
+	/**
+	 * Source Register 1
+	 */
+	private BitString sr1;
+
+	/**
+	 * Source Register 2
+	 */
+	private BitString sr2;
+
+	/**
+	 * Immediate Value (5-bits)
+	 */
+	private BitString imm5;
+
+	/**
+	 * 9-Bit PC offset
+	 */
+	private BitString pos9;
+
+    /**
+	 * 8-bit TRAP vector for 'halt'
+	 */
+	private final char[] haltBits = {'0','0','1','0','0','1','0','1'};
+
+	/**
+	 * 8-bit TRAP vector for 'out'
+	 */
+	private final char[] outBits = {'0','0','1','0','0','0','0','1'};
+
+	/**
 	 * Initialize all memory addresses to 0, registers to 0 to 7
-	 * PC, IR to 16 bit 0s and CC to 000.
+	 * PC, IR to 16-bits 0s and CC to 000.
 	 */
 
 	public Computer() {
@@ -63,13 +96,13 @@ public class Computer {
 		mIR.setUnsignedValue(0); //creates an IR with [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 
 		mCC = new BitString();
-		mCC.setBits(new char[]{'0', '0', '0'}); //creates a Condition Code of [0,0,0]
+		mCC.setBits(new char[]{'0', '1', '0'}); //creates a Condition Code of [0,1,0]
 		// [1,0,0] -> negative, [0,1,0] -> zero, [0,0,1] -> positive
 
 		mRegisters = new BitString[MAX_REGISTERS];
 		for (int i = 0; i < MAX_REGISTERS; i++) {
 			mRegisters[i] = new BitString();
-			mRegisters[i].setUnsignedValue(0);
+			mRegisters[i].setUnsignedValue(i);
 		}
 		//[R0, R1, R2, R3, R4, R5, R6, R7] the elements represents the registers
 
@@ -131,7 +164,7 @@ public class Computer {
 	}
 
 	/**
-	 * Loads a 16 bit word into memory at the given address. 
+	 * Loads a 16-bit word into memory at the given address.
 	 * @param address memory address
 	 * @param word data or instruction or address to be loaded into memory
 	 */
@@ -147,53 +180,54 @@ public class Computer {
 	 * @param theInstruction the Strings that contain the instructions or data.
 	 */
 	public void loadMachineCode(final String ... theInstruction) {
+		String[] input = theInstruction.clone();
+
 		if (theInstruction.length == 0 || theInstruction.length >= MAX_MEMORY) {
 			throw new IllegalArgumentException("Invalid words");
 		}
 		for (int i = 0; i < theInstruction.length; i++) {
 			final BitString instruction = new BitString();
-			instruction.setBits(theInstruction[i].toCharArray());
+			input[i] = input[i].replace("_", "");
+			input[i] = input[i].replace(" ", "");
+			input[i] = input[i].replace("-","");
+			instruction.setBits(input[i].toCharArray());
 			loadWord(i, instruction);
 		}
 	}
 	
-	
-	
-	
-	
+
 	// The next 6 methods are used to execute the required instructions:
 	// BR, ADD, LD, ST, AND, NOT, TRAP
 	
 	/**
-	 * op   nzp pc9offset
+	 * op nzp PcOffset9
 	 * 0000 000 000000000
-	 * 
 	 * The condition codes specified by bits [11:9] are tested.
 	 * If bit [11] is 1, N is tested; if bit [11] is 0, N is not tested.
 	 * If bit [10] is 1, Z is tested, etc.
 	 * If any of the condition codes tested is 1, the program branches to the memory location specified by
-	 * adding the sign-extended PCoffset9 field to the incremented PC.
+	 * adding the sign-extended PcOffset9 field to the incremented PC.
 	 */
 	public void executeBranch() {
-		
-		// implement the BR instruction here
-
-		//[15:12] -> 0's; [11:9] -> nzp; [8:0] -> PC Offset 9
 
 		BitString nzp = mIR.substring(4, 3);
-		BitString offSet = mIR.substring(7, 9);
+		pos9 = getOperand("pos9");
 
-		if(Arrays.equals(getCC().getBits(), nzp.getBits())) {
-			int decOffSet = offSet.get2sCompValue();
-			int decMPC = mPC.getUnsignedValue();
+		int decOffSet = pos9.get2sCompValue();
+		int decPC = mPC.getUnsignedValue();
 
-			if(decMPC + decOffSet < 0 || decMPC + decOffSet > 49) {
-				throw new IllegalArgumentException("Your BR 9-bit offset falls outside the " +
-						"scope of" +
-						" your program! Please readjust your 9-bit offset!");
-			}
+		if(decPC + decOffSet < 0 || decPC + decOffSet > 49) {
+				throw new OutOfMemoryError("Your BR 9-bit offset falls outside the "
+						+ "scope of your program! Please readjust your 9-bit offset at PC "
+						+ getPC().getUnsignedValue());
+		}
 
-			mPC.set2sCompValue(decMPC + decOffSet);
+		if(nzp.getBits()[0] == '1' && mCC.getBits()[0] == '1'
+				|| nzp.getBits()[1] == '1' && mCC.getBits()[1] == '1'
+				|| nzp.getBits()[2] == '1' && mCC.getBits()[2] == '1') {
+
+			mPC.set2sCompValue(decOffSet + decPC);
+
 		}
 
 	}
@@ -201,12 +235,9 @@ public class Computer {
 	/**
 	 * op   dr  sr1      sr2
 	 * 0001 000 000 0 00 000
-	 * <p>
 	 * OR
-	 * <p>
 	 * op   dr  sr1   imm5
 	 * 0001 000 000 1 00000
-	 * <p>
 	 * If bit [5] is 0, the second source operand is obtained from SR2.
 	 * If bit [5] is 1, the second source operand is obtained by sign-extending the imm5 field to 16 bits.
 	 * In both cases, the second source operand is added to the contents of SR1 and the
@@ -215,29 +246,34 @@ public class Computer {
 	 */
 	public void executeAdd() {
 
-		BitString dr = getOperand("dr");
-		BitString sr1 =  getOperand("sr1");
-		BitString sr2 =  getOperand("sr2");
-		BitString immediate =  getOperand("imm");
+		dr = getOperand("dr");
+		sr1 =  getOperand("sr1");
+		sr2 =  getOperand("sr2");
+		imm5 =  getOperand("imm5");
 
 		boolean isImmediate = mIR.substring(10,1).getUnsignedValue() == 1;
 
-		int totalWithImm = mRegisters[sr1.getUnsignedValue()].get2sCompValue()
-				+ immediate.get2sCompValue();
-
-		int totalWithSr2 = mRegisters[sr2.getUnsignedValue()].get2sCompValue() +
-				mRegisters[sr1.getUnsignedValue()].get2sCompValue();
-
 		if(isImmediate) {
-			mRegisters[dr.getUnsignedValue()].set2sCompValue(totalWithImm);
+			int totalWithImm5 = mRegisters[sr1.getUnsignedValue()].get2sCompValue()
+				+ imm5.get2sCompValue();
 
+			mRegisters[dr.getUnsignedValue()].set2sCompValue(totalWithImm5);
 
 		} else {
+			boolean isSource2 = Arrays.equals(mIR.substring(10, 3).getBits(),
+					new char[]{'0','0','0'});
+			if(!isSource2) {
+				throw new UnsupportedOperationException("Incorrect bits at [5:3] on ADD " +
+						"instruction on PC " + getPC().getUnsignedValue());
+			}
+
+			int totalWithSr2 = mRegisters[sr2.getUnsignedValue()].get2sCompValue() +
+				mRegisters[sr1.getUnsignedValue()].get2sCompValue();
+
 			mRegisters[dr.getUnsignedValue()].set2sCompValue(totalWithSr2);
 		}
 
 		setCC(mRegisters[dr.getUnsignedValue()].get2sCompValue());
-
 	}
 	
 	/**
@@ -247,9 +283,20 @@ public class Computer {
 	 * then sets CC.
 	 */
 	public void executeLoad() {
-		System.out.println("LD");  // remove this print statement
-		
-		// implement the LD instruction here
+		dr = getOperand("dr");
+		pos9 = getOperand("pos9");
+
+		int targetPc = pos9.get2sCompValue() + mPC.getUnsignedValue();
+
+		if (targetPc > MAX_MEMORY - 1) {
+			throw new OutOfMemoryError("Your LD 9-bit offset falls outside the "
+						+ "scope of your program! Please readjust your 9-bit offset at PC "
+						+ getPC().getUnsignedValue());
+		}
+
+		mRegisters[dr.getUnsignedValue()].setBits(mMemory[targetPc].getBits());
+
+		setCC(mRegisters[dr.getUnsignedValue()].get2sCompValue());
 
 	}
 	
@@ -259,9 +306,21 @@ public class Computer {
 	 * and adding this value to the incremented PC.
 	 */
 	public void executeStore() {
-		System.out.println("ST");  // remove this print statement
-		
-		// implement the ST instruction here
+		sr1 = getOperand("dr");
+		pos9 = getOperand("pos9");
+
+		if(pos9.get2sCompValue() + mPC.getUnsignedValue() > MAX_MEMORY - 1) {
+			throw new OutOfMemoryError("Your ST 9-bit offset falls outside the "
+						+ "scope of your program! Please readjust your 9-bit offset at PC "
+						+ getPC().getUnsignedValue());
+		}
+
+		//Getting the value from the source register
+		char[] sr1Arr = mRegisters[sr1.getUnsignedValue()].getBits();
+
+
+		//Storing the bits found in sr1 into the memory location via offset + PC
+		mMemory[mPC.getUnsignedValue() + pos9.get2sCompValue()].setBits(sr1Arr);
 
 	}
 	
@@ -282,36 +341,43 @@ public class Computer {
 	 * is negative, zero, or positive.
 	 */
 	public void executeAnd() {
-		//TODO: Fix this, need to figure out how to check individual bits in the destination
-		// two registers.
-		BitString dr = getOperand("dr");
-		BitString sr1 = getOperand("sr1");
-		BitString sr2 = getOperand("sr2");
-		BitString immediate = getOperand("imm");
+
+		dr = getOperand("dr");
+		sr1 = getOperand("sr1");
+		sr2 = getOperand("sr2");
+		imm5 = getOperand("imm5");
+
 		boolean isImmediate = mIR.substring(10,1).getUnsignedValue() == 1;
 
-		char[] destChar = new char[getOperand("dr").getBits().length];
-		char[] sr1Char = sr1.getBits();
-		char[] sr2Char = sr2.getBits();
-		char[] immChar = immediate.getBits();
+		char[] destR = new char[16];
+		char[] source1 = mRegisters[sr1.getUnsignedValue()].getBits();
+		char[] source2 = mRegisters[sr2.getUnsignedValue()].getBits();
+		char[] immediate = signExt(imm5.getBits());
 
-		if(isImmediate) {
-			for(int i = 0; i < destChar.length; i++) {
-				if (sr1Char[i] == '1' && immChar[i] == '1') {
-					destChar[i] = '1';
+		//Checks if the two values are '1's
+		for(int i = 0; i < destR.length; i++) {
+			if (isImmediate) {
+				if (source1[i] == '1' && immediate[i] == '1') {
+					destR[i] = '1';
 				} else {
-					destChar[i] = '0';
+					destR[i] = '0';
+				}
+
+			} else {
+				if (source1[i] == '1' && source2[i] == '1') {
+					destR[i] = '1';
+				} else {
+					destR[i] = '0';
 				}
 			}
-
-
 		}
 
+		//sets the value in destR as the value for the destination register
+		mRegisters[dr.getUnsignedValue()].setBits(destR);
 
-
-
+		//sets condition code
+		setCC(mRegisters[dr.getUnsignedValue()].get2sCompValue());
 	}
-
 
 
 	/**
@@ -320,22 +386,19 @@ public class Computer {
 	 * Then sets CC.
 	 */
 	public void executeNot() {
-		BitString dest = mIR.substring(4, 3);
-		BitString sr = mIR.substring(7, 3);
+		dr = getOperand("dr");
+		sr1 = getOperand("sr1");
 
-
-		//R(n) <- not R(m)
-		mRegisters[dest.getUnsignedValue()] = mRegisters[sr.getUnsignedValue()].copy();
-		mRegisters[dest.getUnsignedValue()].invert();
+		mRegisters[dr.getUnsignedValue()] = mRegisters[sr1.getUnsignedValue()].copy();
+		mRegisters[dr.getUnsignedValue()].invert();
 
 		//set Condition Code
-		setCC(mRegisters[dest.getUnsignedValue()].get2sCompValue());
+		setCC(mRegisters[dr.getUnsignedValue()].get2sCompValue());
 
 	}
 	
 	/**
 	 * Executes the trap operation by checking the vector (bits [7:0]
-	 * 
 	 * vector x21 - OUT
 	 * vector x25 - HALT
 	 * 
@@ -345,23 +408,21 @@ public class Computer {
 		boolean halt = false;
 
 		// implement the TRAP instruction here
-		BitString vector = mIR.substring(8,8);
-		char[] haltBits = {'0','0','1','0','0','1','0','1'};
-		char[] outBits = {'0','0','1','0','0','0','0','1'};
+        BitString vector = getOperand("trap");
+
 
 		if(Arrays.equals(vector.getBits(), haltBits)) {
 			halt = true;
 
 		} else if(Arrays.equals(vector.getBits(), outBits)) {
-			char ascii = (char) mRegisters[0].getUnsignedValue();
-			System.out.println("Output -> " + ascii);
+			char ascii = (char) getRegisters()[0].getUnsignedValue();
+			System.out.print(ascii);
 
 		}
 
 		return halt;
 	}
-	
-	
+
 
 	/**
 	 * This method will execute all the instructions starting at address 0 
@@ -388,10 +449,10 @@ public class Computer {
 				executeBranch();
 			} else if (opCode == 1) {  // ADD    0001
 				executeAdd();
-//			} else if (opCode == 2) {  // LD     0010
-//				executeLoad();
-//			} else if (opCode == 3) {  // ST     0011
-//				executeStore();
+			} else if (opCode == 2) {  // LD     0010
+				executeLoad();
+			} else if (opCode == 3) {  // ST     0011
+				executeStore();
 			} else if (opCode == 5) {  // AND    0101
 				executeAnd();
 			} else if (opCode == 9) {  // NOT    1001
@@ -444,18 +505,19 @@ public class Computer {
 	}
 
 	/**
-	 * Adjusts the CC
-	 * @param equ The integer representation that would be used to change the condition code.
+	 * Adjusts the Condition Code
+	 * @param arg The signed integer representation that would be used to change the condition
+	 *        	  code.
 	 */
-	private void setCC(final int equ){
+	private void setCC(final int arg){
 		char[] negativeCC = {'1','0','0'};
 		char[] positiveCC = {'0','0','1'};
 		char[] zeroCC = {'0','0','0'};
 
-		if(equ < 0) {
+		if(arg < 0) {
 			mCC.setBits(negativeCC);
 
-		}else if(equ > 0) {
+		}else if(arg > 0) {
 			mCC.setBits(positiveCC);
 
 		}else {
@@ -467,20 +529,55 @@ public class Computer {
 	/**
 	 * Input the operand you want and the output will be a BitString object of that operand.
 	 *
-	 * @param operands (sr1, sr2, dr, imm)
-	 * @return BitString object of that register
+	 * @param operands 'sr1', 'nzp', 'sr2', 'dr', 'imm5', 'pos9', 'pos6','trap'
+	 *
+	 * @return Substring of the BitString object for the operand
 	 */
 	private BitString getOperand(final String operands){
 		BitString result;
 
-		switch(operands){
+		switch(operands.toLowerCase()){
+			case "nzp" -> result = mIR.substring(3,3);
 			case "dr" -> result = mIR.substring(4,3);
 			case "sr1" -> result = mIR.substring(7,3);
+			case "pos9" -> result = mIR.substring(7,9);
+			case "trap" -> result = mIR.substring(8,8);
+			case "pos6" -> result = mIR.substring(10, 6);
+			case "imm5" -> result = mIR.substring(11,5);
 			case "sr2" -> result = mIR.substring(13,3);
-			case "imm" -> result = mIR.substring(11,5);
 			default -> throw new IllegalArgumentException("Invalid operand");
 		}
 
+		return result;
+	}
+
+	/**
+	 * Sign extension for PC offsets, and immediate values
+	 *
+	 * @param operand char[] that needs a sign extension to 16-bits
+	 */
+	private char[] signExt(final char[] operand) {
+		int numOfBitsNeed = 16 - operand.length;
+
+		char[] result = new char[operand.length + numOfBitsNeed];
+
+		int resultIndex = result.length - 1;
+		int arrIndex = operand.length - 1;
+
+		for(int i = 0; i < result.length; i++){
+			if(i < operand.length ) {
+
+				result[resultIndex - i] = operand[arrIndex - i];
+
+			} else {
+				if(operand[0] == '1'){
+				result[resultIndex - i] = '1';
+				} else {
+				result[resultIndex - i] = '0';
+				}
+			}
+
+		}
 		return result;
 	}
 }
