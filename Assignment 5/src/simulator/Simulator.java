@@ -1,8 +1,10 @@
 package simulator;
 
 /**
- * The Simulator class is used to load and execute all of the instructions in a machine code program.
- * A sample machine code program is provided which outputs the characters 9 to 1 to the console.
+ * The Simulator class is used to load
+ * and execute all the instructions in a machine code program.
+ * A sample machine code program is provided
+ * which outputs the characters 9 to 1 to the console.
  *  
  * @author mmuppa
  * @author acfowler
@@ -17,7 +19,7 @@ public class Simulator {
 		/************************************** */
 		/** The next variable - "program" */
 		/** allows someone using the simulator (such as a grader) */
-		/** to decide what program will be simulated. */
+		/** to decide, what program will be simulated. */
 		/** The simulation must load and execute */
 		/** instructions found in the "program" array. */
 		/**
@@ -89,7 +91,7 @@ public class Simulator {
 		/* Show the initial configuration of the computer. */
 		//myComputer.display();
 		
-		myComputer.loadMachineCode(program1);
+		myComputer.loadMachineCode(program);
 
 		/* Execute the program. */
 		/* During execution, the only output to the screen should be */
