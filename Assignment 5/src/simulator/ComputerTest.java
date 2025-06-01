@@ -163,7 +163,6 @@ class ComputerTest {
 	void testExecuteStore() {
 
 		char[] ccDefault = myComputer.getCC().getBits();
-		char zero;
 		String[] program = {
 				"0011 111 0 0000 0001",//Memory[2] <- R7
 				"1111 0000 0010 0101",//TRAP HALT PC = 2

@@ -214,15 +214,15 @@ public class Computer {
 	 */
 	public void executeBranch() {
 
-		BitString nzp = mIR.substring(4, 3);
+		BitString nzp = getIR().substring(4, 3);
 		pos9 = getOperand("pos9");
 
 		int decOffSet = pos9.get2sCompValue();
-		int currentPC = mPC.getUnsignedValue();
+		int currentPC = getPC().getUnsignedValue();
 		boolean unconditionalBranch = Arrays.equals(nzp.getBits(), new char[]{'1','1','1'});
-		boolean conditionalBranch = nzp.getBits()[0] == '1' && mCC.getBits()[0] == '1'
-				|| nzp.getBits()[1] == '1' && mCC.getBits()[1] == '1'
-				|| nzp.getBits()[2] == '1' && mCC.getBits()[2] == '1';
+		boolean conditionalBranch = nzp.getBits()[0] == '1' && getCC().getBits()[0] == '1'
+				|| nzp.getBits()[1] == '1' && getCC().getBits()[1] == '1'
+				|| nzp.getBits()[2] == '1' && getCC().getBits()[2] == '1';
 
 		if(currentPC + decOffSet < 0 || currentPC + decOffSet > 49) {
 				throw new OutOfMemoryError("Your BR 9-bit offset falls outside the "
@@ -260,29 +260,31 @@ public class Computer {
 		sr2 =  getOperand("sr2");
 		imm5 =  getOperand("imm5");
 
-		boolean isImmediate = mIR.substring(10,1).getUnsignedValue() == 1;
+		boolean isImmediate = getIR().substring(10,1).getUnsignedValue() == 1;
 
 		if(isImmediate) {
-			int totalWithImm5 = mRegisters[sr1.getUnsignedValue()].get2sCompValue()
+			int totalWithImm5 = getRegisters()[sr1.getUnsignedValue()].get2sCompValue()
 				+ imm5.get2sCompValue();
 
 			mRegisters[dr.getUnsignedValue()].set2sCompValue(totalWithImm5);
 
 		} else {
-			boolean isSource2 = Arrays.equals(mIR.substring(10, 3).getBits(),
+			boolean isSource2 = Arrays.equals(getIR().substring(10, 3).getBits(),
 					new char[]{'0','0','0'});
+
+			//Throws exception if the bits [5:3] are not zeros
 			if(!isSource2) {
 				throw new UnsupportedOperationException("Incorrect bits at [5:3] on ADD " +
 						"instruction on PC " + getPC().getUnsignedValue());
 			}
 
-			int totalWithSr2 = mRegisters[sr2.getUnsignedValue()].get2sCompValue() +
-				mRegisters[sr1.getUnsignedValue()].get2sCompValue();
+			int totalWithSr2 = getRegisters()[sr2.getUnsignedValue()].get2sCompValue() +
+				getRegisters()[sr1.getUnsignedValue()].get2sCompValue();
 
 			mRegisters[dr.getUnsignedValue()].set2sCompValue(totalWithSr2);
 		}
 
-		setCC(mRegisters[dr.getUnsignedValue()].get2sCompValue());
+		setCC(getRegisters()[dr.getUnsignedValue()].get2sCompValue());
 	}
 	
 	/**
@@ -295,7 +297,7 @@ public class Computer {
 		dr = getOperand("dr");
 		pos9 = getOperand("pos9");
 
-		int targetPc = pos9.get2sCompValue() + mPC.getUnsignedValue();
+		int targetPc = pos9.get2sCompValue() + getPC().getUnsignedValue();
 
 		if (targetPc > MAX_MEMORY - 1) {
 			throw new OutOfMemoryError("Your LD 9-bit offset falls outside the "
@@ -303,9 +305,9 @@ public class Computer {
 						+ getPC().getUnsignedValue());
 		}
 
-		mRegisters[dr.getUnsignedValue()].setBits(mMemory[targetPc].getBits());
+		mRegisters[dr.getUnsignedValue()].setBits(getMemory()[targetPc].getBits());
 
-		setCC(mRegisters[dr.getUnsignedValue()].get2sCompValue());
+		setCC(getRegisters()[dr.getUnsignedValue()].get2sCompValue());
 
 	}
 	
@@ -325,7 +327,7 @@ public class Computer {
 		}
 
 		//Getting the value from the source register
-		char[] sr1Arr = mRegisters[sr1.getUnsignedValue()].getBits();
+		char[] sr1Arr = getRegisters()[sr1.getUnsignedValue()].getBits();
 
 
 		//Storing the bits found in sr1 into the memory location via offset + PC
@@ -356,11 +358,11 @@ public class Computer {
 		sr2 = getOperand("sr2");
 		imm5 = getOperand("imm5");
 
-		boolean isImmediate = mIR.substring(10,1).getUnsignedValue() == 1;
+		boolean isImmediate = getIR().substring(10,1).getUnsignedValue() == 1;
 
 		char[] destR = new char[16];
-		char[] source1 = mRegisters[sr1.getUnsignedValue()].getBits();
-		char[] source2 = mRegisters[sr2.getUnsignedValue()].getBits();
+		char[] source1 = getRegisters()[sr1.getUnsignedValue()].getBits();
+		char[] source2 =getRegisters()[sr2.getUnsignedValue()].getBits();
 		char[] immediate = signExt(imm5.getBits());
 
 		//Checks if the two values are '1's
@@ -381,11 +383,11 @@ public class Computer {
 			}
 		}
 
-		//sets the value in destR as the value for the destination register
+		//sets the values in destR into the destination register
 		mRegisters[dr.getUnsignedValue()].setBits(destR);
 
 		//sets condition code
-		setCC(mRegisters[dr.getUnsignedValue()].get2sCompValue());
+		setCC(getRegisters()[dr.getUnsignedValue()].get2sCompValue());
 	}
 
 
@@ -398,7 +400,7 @@ public class Computer {
 		dr = getOperand("dr");
 		sr1 = getOperand("sr1");
 
-		mRegisters[dr.getUnsignedValue()] = mRegisters[sr1.getUnsignedValue()].copy();
+		mRegisters[dr.getUnsignedValue()] = getRegisters()[sr1.getUnsignedValue()];
 		mRegisters[dr.getUnsignedValue()].invert();
 
 		//set Condition Code
@@ -444,13 +446,13 @@ public class Computer {
 
 		while (!halt) {
 			// Fetch the next instruction
-			mIR = mMemory[mPC.getUnsignedValue()];
+			mIR = getMemory()[mPC.getUnsignedValue()];
 			// increment the PC
 			mPC.addOne();
 
 			// Decode the instruction's first 4 bits 
 			// to figure out the opcode
-			opCodeStr = mIR.substring(0, 4);
+			opCodeStr =getIR().substring(0, 4);
 			opCode = opCodeStr.getUnsignedValue();
 
 			// What instruction is this?
@@ -480,19 +482,19 @@ public class Computer {
 	public void display() {
 		System.out.println();
 		System.out.print("PC ");
-		mPC.display(true);
+		getPC().display(true);
 		System.out.print("   ");
 
 		System.out.print("IR ");
-		mIR.display(true);
+		getIR().display(true);
 		System.out.print("   ");
 
 		System.out.print("CC ");
-		mCC.display(true);
+		getCC().display(true);
 		System.out.println("   ");
 		for (int i = 0; i < MAX_REGISTERS; i++) {
 			System.out.printf("R%d ", i);
-			mRegisters[i].display(true);
+			getRegisters()[i].display(true);
 			if (i % 3 == 2) {
 				System.out.println();
 			} else {
@@ -502,7 +504,7 @@ public class Computer {
 		System.out.println();
 		for (int i = 0; i < MAX_MEMORY; i++) {
 			System.out.printf("%3d ", i);
-			mMemory[i].display(true);
+			getMemory()[i].display(true);
 			if (i % 3 == 2) {
 				System.out.println();
 			} else {
