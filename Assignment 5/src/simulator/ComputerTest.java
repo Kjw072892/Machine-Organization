@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+
 
 /**
  * Junit test for the Computer class
@@ -155,22 +157,27 @@ class ComputerTest {
 	 */
 	@Test
 	void testExecuteStore() {
+
+		char[] ccDefault = myComputer.getCC().getBits();
+		char zero;
 		String[] program = {
 				"0011 111 0 0000 0001",//Memory[2] <- R7
 				"1111 0000 0010 0101",//TRAP HALT PC = 2
 				"0000 0000 0011 1001",//x39 (57)
 		};
 
+
+
 		myComputer.loadMachineCode(program);
 		myComputer.execute();
-		//myComputer.display();
+		myComputer.display();
 
 		assertAll("Testing ST instruction",
 				() -> assertEquals(7, myComputer.getMemory()[2].get2sCompValue(),
 						"Memory location 2 should have had 7 loaded into it! But got"
 								+ " 57 instead!"),
-				//Checks if the condition code was changed from its startup position
-				() -> assertArrayEquals(new char[]{'0','1','0'},
+				//Checks if the condition code was changed from its default position
+				() -> assertArrayEquals(ccDefault,
 						myComputer.getCC().getBits(),
 						"Your Condition Code was updated unexpectedly!")
 		);
