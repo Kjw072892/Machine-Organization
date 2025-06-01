@@ -14,9 +14,6 @@ public class Simulator {
 
 	public static void main(String[] args) {
 
-		//TODO: Fun little self-Made Project, Create a JAVAFX GUI with LC_3 like features
-		//TODO: ADD JSR instruction in Computer.java class for fun
-
 		/************************************** */
 		/** The next variable - "program" */
 		/** allows someone using the simulator (such as a grader) */
@@ -82,12 +79,12 @@ public class Simulator {
 				"0000 001 1 1111 1101",   //; BRnzp do it again if the counter is not yet zero
 				"1111 0000 0010 0101"};  //; halt - TRAP with vector x25
 
-		//execute(program);
-		execute(program1);
+		execute(program);
+		//execute(program1);
 	}
 
 	/**
-	 * Executes the program
+	 * Executes the machine code program
 	 * @param program the Machine code program
 	 */
 	private static void execute(String[] program) {
