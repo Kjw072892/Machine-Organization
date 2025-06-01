@@ -50,7 +50,7 @@ class ComputerTest {
 
 		assertAll("Testing BRnzp instruction",
 				() -> assertEquals(4, myComputer.getPC().getUnsignedValue(),
-						"PC count should have been 3. The PC offset is wrong!")
+						"PC should have been 4. The PC offset is wrong!")
 		);
 	}
 
@@ -74,7 +74,7 @@ class ComputerTest {
 
 		assertAll("Testing BRn instruction",
 				() -> assertEquals(4, myComputer.getPC().getUnsignedValue(),
-						"PC count should have been 3. The PC offset is wrong!")
+						"PC should have been 4. The PC offset is wrong!")
 		);
 	}
 
@@ -99,7 +99,7 @@ class ComputerTest {
 
 		assertAll("Testing BRp instruction",
 				() -> assertEquals(5, myComputer.getPC().getUnsignedValue(),
-						"PC count should have been 3. The PC offset is wrong!")
+						"PC should have been 5. The PC offset is wrong!")
 		);
 	}
 	/**
@@ -122,7 +122,7 @@ class ComputerTest {
 
 		assertAll("Testing BRz instruction",
 				() -> assertEquals(5, myComputer.getPC().getUnsignedValue(),
-						"PC count should have been 3. The PC offset is wrong!")
+						"PC should have been 5. The PC offset is wrong!")
 		);
 	}
 
@@ -131,10 +131,14 @@ class ComputerTest {
 	 */
 	@Test
 	void testExecuteLoad() {
+		char[] ccExpected = myComputer.getCC().getBits();
+		ccExpected[0] = '1';
+		ccExpected[1] = '0';
+
 		String[] program = {
 				"0010 000 0 0000 0001",//R0 <- x-39
 				"1111 0000 0010 0101",//TRAP HALT PC = 2
-				"1111 1111 1101 1001",//x-39
+				"1111 1111 1101 1001",//-39
 				"0000 0000 0011 1111",//x3f
 		};
 
@@ -147,7 +151,7 @@ class ComputerTest {
 						"Register 0 should have had -39 loaded into it! But got "
 								+ myComputer.getRegisters()[0].get2sCompValue() + " " +
 								"instead!"),
-				() -> assertArrayEquals(new char[]{'1','0','0'}, myComputer.getCC().getBits(),
+				() -> assertArrayEquals(ccExpected, myComputer.getCC().getBits(),
 						"Your Condition Code was not updated properly!")
 		);
 	}

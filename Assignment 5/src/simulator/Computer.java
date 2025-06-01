@@ -96,7 +96,7 @@ public class Computer {
 		mIR.setUnsignedValue(0); //creates an IR with [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 
 		mCC = new BitString();
-		mCC.setBits(new char[]{'0', '0', '0'}); //LC-3 defaults to CC: Z on startup
+		mCC.setBits(new char[]{'0', '1', '0'}); //LC-3 defaults to CC: Z on startup
 		// [[1,0,0] -> negative], [[0,1,0] -> zero], [[0,0,1] -> positive]
 
 		mRegisters = new BitString[MAX_REGISTERS];
@@ -326,7 +326,6 @@ public class Computer {
 		//Storing the bits found in sr1 into the memory location via offset + PC
 		mMemory[mPC.getUnsignedValue() + pos9.get2sCompValue()].setBits(sr1Arr);
 
-		setCC(mMemory[mPC.getUnsignedValue() + pos9.get2sCompValue()].get2sCompValue());
 	}
 	
 	/**
