@@ -6,12 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
 
 
 /**
  * Junit test for the Computer class
- * @author KJW0728 (Kassie Whitney)
+ *
+ * @author Kassie Whitney (kjw0728)
  * @version 5.31.25
  */
 class ComputerTest {
@@ -136,8 +136,8 @@ class ComputerTest {
 		ccExpected[1] = '0';
 
 		String[] program = {
-				"0010 000 0 0000 0001",//R0 <- x-39
-				"1111 0000 0010 0101",//TRAP HALT PC = 2
+				"0010 000 0 0000 0001",//R0 <- -39
+				"1111 0000 0010 0101",//TRAP HALT
 				"1111 1111 1101 1001",//-39
 				"0000 0000 0011 1111",//x3f
 		};

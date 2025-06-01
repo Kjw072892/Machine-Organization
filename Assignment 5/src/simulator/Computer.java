@@ -6,8 +6,7 @@ import java.util.Arrays;
  * The Computer class is composed of registers, memory, PC, IR, and CC.
  * The Computer can execute a program based on the instructions in memory.
  *  
- * @author KJW0728 (Kassie Whitney)
- * @author acfowler
+ * @author Kassie Whitney (kjw0728)
  * @version 5.31.25
  */
 public class Computer {
