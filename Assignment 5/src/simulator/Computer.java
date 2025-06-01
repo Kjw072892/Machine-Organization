@@ -96,7 +96,7 @@ public class Computer {
 		mIR.setUnsignedValue(0); //creates an IR with [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 
 		mCC = new BitString();
-		mCC.setBits(new char[]{'0', '1', '0'}); //LC-3 defaults to CC: Z on startup
+		mCC.setBits(new char[]{'0', '0', '0'}); //LC-3 defaults to CC: Z on startup
 		// [[1,0,0] -> negative], [[0,1,0] -> zero], [[0,0,1] -> positive]
 
 		mRegisters = new BitString[MAX_REGISTERS];
@@ -218,20 +218,25 @@ public class Computer {
 		pos9 = getOperand("pos9");
 
 		int decOffSet = pos9.get2sCompValue();
-		int decPC = mPC.getUnsignedValue();
+		int currentPC = mPC.getUnsignedValue();
+		boolean unconditionalBranch = Arrays.equals(nzp.getBits(), new char[]{'1','1','1'});
+		boolean conditionalBranch = nzp.getBits()[0] == '1' && mCC.getBits()[0] == '1'
+				|| nzp.getBits()[1] == '1' && mCC.getBits()[1] == '1'
+				|| nzp.getBits()[2] == '1' && mCC.getBits()[2] == '1';
 
-		if(decPC + decOffSet < 0 || decPC + decOffSet > 49) {
+		if(currentPC + decOffSet < 0 || currentPC + decOffSet > 49) {
 				throw new OutOfMemoryError("Your BR 9-bit offset falls outside the "
 						+ "scope of your program! Please readjust your 9-bit offset at PC "
 						+ getPC().getUnsignedValue());
 		}
 
-		if(nzp.getBits()[0] == '1' && mCC.getBits()[0] == '1'
-				|| nzp.getBits()[1] == '1' && mCC.getBits()[1] == '1'
-				|| nzp.getBits()[2] == '1' && mCC.getBits()[2] == '1') {
+		if(conditionalBranch) {
 
-			mPC.set2sCompValue(decOffSet + decPC);
+			mPC.set2sCompValue(decOffSet + currentPC);
 
+		} else if(unconditionalBranch) {
+
+			mPC.set2sCompValue(decOffSet + currentPC);
 		}
 
 	}

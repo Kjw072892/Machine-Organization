@@ -37,8 +37,7 @@ class ComputerTest {
 	void testExecuteBranchNZP() {
 
 		String[] programNzp = {
-				"1001 000 000 111111",//Not R0
-				"0000 111 0 0000 0001",//BR pc + 1 (pc = 4)
+				"0000 111 0 0000 0001",//BR pc + 1 (pc = 1)
 				"1111 0000 0010 0101",//TRAP HALT PC = 2
 				"1111 0000 0010 0101"//TRAP HALT PC = 3
 		};
@@ -49,8 +48,9 @@ class ComputerTest {
 		//myComputer.display();
 
 		assertAll("Testing BRnzp instruction",
-				() -> assertEquals(4, myComputer.getPC().getUnsignedValue(),
-						"PC should have been 4. The PC offset is wrong!")
+				() -> assertEquals(3, myComputer.getPC().getUnsignedValue(),
+						"PC should have been 3. But your PC is at "
+								+ myComputer.getPC().getUnsignedValue() + "!")
 		);
 	}
 
@@ -174,7 +174,7 @@ class ComputerTest {
 
 		myComputer.loadMachineCode(program);
 		myComputer.execute();
-		myComputer.display();
+		//myComputer.display();
 
 		assertAll("Testing ST instruction",
 				() -> assertEquals(7, myComputer.getMemory()[2].get2sCompValue(),
