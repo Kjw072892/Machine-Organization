@@ -82,7 +82,7 @@ public class Simulator {
 				"0000 001 1 1111 1101",   //; BRnzp do it again if the counter is not yet zero
 				"1111 0000 0010 0101"};  //; halt - TRAP with vector x25
 
-		execute(program);
+		//execute(program);
 		execute(program1);
 	}
 
