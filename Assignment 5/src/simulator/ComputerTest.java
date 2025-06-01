@@ -44,6 +44,7 @@ class ComputerTest {
 
 		myComputer.loadMachineCode(programNzp);
 		myComputer.execute();
+		//myComputer.display();
 
 		assertAll("Testing BRnzp instruction",
 				() -> assertEquals(4, myComputer.getPC().getUnsignedValue(),
@@ -66,6 +67,7 @@ class ComputerTest {
 
 		myComputer.loadMachineCode(programNegative);
 		myComputer.execute();
+		//myComputer.display();
 
 
 		assertAll("Testing BRn instruction",
@@ -91,6 +93,7 @@ class ComputerTest {
 
 		myComputer.loadMachineCode(programPositive);
 		myComputer.execute();
+		//myComputer.display();
 
 		assertAll("Testing BRp instruction",
 				() -> assertEquals(5, myComputer.getPC().getUnsignedValue(),
@@ -113,6 +116,7 @@ class ComputerTest {
 
 		myComputer.loadMachineCode(programZero);
 		myComputer.execute();
+		//myComputer.display();
 
 		assertAll("Testing BRz instruction",
 				() -> assertEquals(5, myComputer.getPC().getUnsignedValue(),
@@ -134,6 +138,7 @@ class ComputerTest {
 
 		myComputer.loadMachineCode(program);
 		myComputer.execute();
+		//myComputer.display();
 
 		assertAll("Testing LD instruction",
 				() -> assertEquals(-39, myComputer.getRegisters()[0].get2sCompValue(),
@@ -158,6 +163,7 @@ class ComputerTest {
 
 		myComputer.loadMachineCode(program);
 		myComputer.execute();
+		//myComputer.display();
 
 		assertAll("Testing ST instruction",
 				() -> assertEquals(7, myComputer.getMemory()[2].get2sCompValue(),
@@ -182,6 +188,7 @@ class ComputerTest {
 
 		myComputer.loadMachineCode(program);
 		myComputer.execute();
+		//myComputer.display();
 
 		assertAll("Testing AND instruction",
 				() -> assertEquals(6, myComputer.getRegisters()[0].get2sCompValue(),
@@ -211,6 +218,7 @@ class ComputerTest {
 		
 		myComputer.loadMachineCode(program);
 		myComputer.execute();
+		//myComputer.display();
 		
 		assertEquals(-6, myComputer.getRegisters()[4].get2sCompValue());
 		
@@ -234,6 +242,7 @@ class ComputerTest {
 		
 		myComputer.loadMachineCode(program);
 		myComputer.execute();
+		//myComputer.display();
 
 		assertEquals(4, myComputer.getRegisters()[0].get2sCompValue());
 		
@@ -256,6 +265,7 @@ class ComputerTest {
 		
 		myComputer.loadMachineCode(program);
 		myComputer.execute();
+		//myComputer.display();
 
 		assertEquals(5, myComputer.getRegisters()[0].get2sCompValue());
 		
@@ -278,6 +288,7 @@ class ComputerTest {
 		
 		myComputer.loadMachineCode(program);
 		myComputer.execute();
+		//myComputer.display();
 
 		assertEquals(-1, myComputer.getRegisters()[0].get2sCompValue());
 		
