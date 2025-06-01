@@ -96,8 +96,8 @@ public class Computer {
 		mIR.setUnsignedValue(0); //creates an IR with [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 
 		mCC = new BitString();
-		mCC.setBits(new char[]{'0', '1', '0'}); //creates a Condition Code of [0,1,0]
-		// [1,0,0] -> negative, [0,1,0] -> zero, [0,0,1] -> positive
+		mCC.setBits(new char[]{'0', '1', '0'}); //LC-3 defaults to CC: Z on startup
+		// [[1,0,0] -> negative], [[0,1,0] -> zero], [[0,0,1] -> positive]
 
 		mRegisters = new BitString[MAX_REGISTERS];
 		for (int i = 0; i < MAX_REGISTERS; i++) {
@@ -200,8 +200,12 @@ public class Computer {
 	// BR, ADD, LD, ST, AND, NOT, TRAP
 	
 	/**
+	 * <P>
 	 * op nzp PcOffset9
+	 * </P>
+	 * <P>
 	 * 0000 000 000000000
+	 * </P>
 	 * The condition codes specified by bits [11:9] are tested.
 	 * If bit [11] is 1, N is tested; if bit [11] is 0, N is not tested.
 	 * If bit [10] is 1, Z is tested, etc.
@@ -233,10 +237,10 @@ public class Computer {
 	}
 	
 	/**
-	 * op   dr  sr1      sr2
+	 * op dr sr1 sr2
 	 * 0001 000 000 0 00 000
 	 * OR
-	 * op   dr  sr1   imm5
+	 * op dr sr1 imm5
 	 * 0001 000 000 1 00000
 	 * If bit [5] is 0, the second source operand is obtained from SR2.
 	 * If bit [5] is 1, the second source operand is obtained by sign-extending the imm5 field to 16 bits.
@@ -512,7 +516,7 @@ public class Computer {
 	private void setCC(final int arg){
 		char[] negativeCC = {'1','0','0'};
 		char[] positiveCC = {'0','0','1'};
-		char[] zeroCC = {'0','0','0'};
+		char[] zeroCC = {'0','1','0'};
 
 		if(arg < 0) {
 			mCC.setBits(negativeCC);

@@ -32,22 +32,92 @@ class ComputerTest {
 	 * Test method for {@link simulator.Computer#executeBranch()}.
 	 */
 	@Test
-	void testExecuteBranch() {
+	void testExecuteBranchNZP() {
 
-		String[] program = {
-				"0000 111 0 0000 0001",//BR pc + 1 (pc = 3)
+		String[] programNzp = {
+				"1001 000 000 111111",//Not R0
+				"0000 111 0 0000 0001",//BR pc + 1 (pc = 4)
 				"1111 0000 0010 0101",//TRAP HALT PC = 2
 				"1111 0000 0010 0101"//TRAP HALT PC = 3
 		};
 
-		myComputer.loadMachineCode(program);
+
+		myComputer.loadMachineCode(programNzp);
 		myComputer.execute();
 
-		assertAll("Testing BR instruction",
-				() -> assertEquals(3, myComputer.getPC().getUnsignedValue(),
+		assertAll("Testing BRnzp instruction",
+				() -> assertEquals(4, myComputer.getPC().getUnsignedValue(),
 						"PC count should have been 3. The PC offset is wrong!")
 		);
+	}
 
+	/**
+	 * Test method for {@link simulator.Computer#executeBranch()}.
+	 */
+	@Test
+	void testExecuteBranchNegative() {
+
+		String[] programNegative = {
+				"1001 000 000 111111",//Not R0
+				"0000 100 0 0000 0001",//BR pc + 1 (pc = 4)
+				"1111 0000 0010 0101",//TRAP HALT PC = 3
+				"1111 0000 0010 0101"//TRAP HALT PC = 4
+		};
+
+		myComputer.loadMachineCode(programNegative);
+		myComputer.execute();
+
+
+		assertAll("Testing BRn instruction",
+				() -> assertEquals(4, myComputer.getPC().getUnsignedValue(),
+						"PC count should have been 3. The PC offset is wrong!")
+		);
+	}
+
+	/**
+	 * Test method for {@link simulator.Computer#executeBranch()}.
+	 */
+	@Test
+	void testExecuteBranchPositive() {
+
+
+		String[] programPositive = {
+				"1001 110 110 111111",//Not R6
+				"1001 110 110 111111",//Not R6
+				"0000 001 0 0000 0001",//BR pc + 1 (pc = 5)
+				"1111 0000 0010 0101",//TRAP HALT PC = 4
+				"1111 0000 0010 0101"//TRAP HALT PC = 5
+		};
+
+		myComputer.loadMachineCode(programPositive);
+		myComputer.execute();
+
+		assertAll("Testing BRp instruction",
+				() -> assertEquals(5, myComputer.getPC().getUnsignedValue(),
+						"PC count should have been 3. The PC offset is wrong!")
+		);
+	}
+	/**
+	 * Test method for {@link simulator.Computer#executeBranch()}.
+	 */
+	@Test
+	void testExecuteBranchZero() {
+
+		String[] programZero = {
+				"1001 000 000 111111",//Not R0
+				"1001 000 000 111111",//Not R0
+				"0000 010 0 0000 0001",//BR pc + 1 (pc = 5)
+				"1111 0000 0010 0101",//TRAP HALT PC = 4
+				"1111 0000 0010 0101"//TRAP HALT PC = 5
+		};
+
+		myComputer.loadMachineCode(programZero);
+		myComputer.execute();
+
+		assertAll("Testing BRz instruction",
+				() -> assertEquals(5, myComputer.getPC().getUnsignedValue(),
+						"PC count should have been 3. The PC offset is wrong!")
+		);
 	}
 
 	/**
@@ -93,6 +163,7 @@ class ComputerTest {
 				() -> assertEquals(7, myComputer.getMemory()[2].get2sCompValue(),
 						"Memory location 2 should have had 7 loaded into it! But got"
 								+ " 57 instead!"),
+				//Checks if the condition code was changed from its startup position
 				() -> assertArrayEquals(new char[]{'0','1','0'},
 						myComputer.getCC().getBits(),
 						"Your Condition Code was updated unexpectedly!")
