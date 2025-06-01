@@ -14,7 +14,8 @@ public class Simulator {
 
 	public static void main(String[] args) {
 
-		Computer myComputer;
+		//TODO: Fun little self-Made Project, Create a JAVAFX GUI with LC_3 like features
+		//TODO: ADD JSR instruction in Computer.java class for fun
 
 		/************************************** */
 		/** The next variable - "program" */
@@ -68,7 +69,6 @@ public class Simulator {
 		 * 		 .END
 		 */
 		
-		
 //		// Here is another program for testing:
 		String[] program1 = {
 //		A program that uses a loop to add 1 + 2 + 3 + 4 + 5 and save the result (15) in RO
@@ -81,27 +81,32 @@ public class Simulator {
 				"0001 001 001 1 11111",	  //; decrement the counter
 				"0000 001 1 1111 1101",   //; BRnzp do it again if the counter is not yet zero
 				"1111 0000 0010 0101"};  //; halt - TRAP with vector x25
-		
-		
-		
-		
-		
-		myComputer = new Computer();
-		
+
+		execute(program);
+		execute(program1);
+	}
+
+	/**
+	 * Executes the program
+	 * @param program the Machine code program
+	 */
+	private static void execute(String[] program) {
+
+		Computer myComputer = new Computer();
 		/* Show the initial configuration of the computer. */
 		//myComputer.display();
-		
-		myComputer.loadMachineCode(program);
 
+		myComputer.loadMachineCode(program);
 		/* Execute the program. */
 		/* During execution, the only output to the screen should be */
 		/* the result of executing OUT. */
 
 		myComputer.execute();
-		
+
 		/* Show the final configuration of the computer. */
-		//System.out.println();
-		 //myComputer.display();
+		System.out.println();
+		myComputer.display();
+
 	}
 
 }
