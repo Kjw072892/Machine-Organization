@@ -2,7 +2,7 @@ package simulator;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HexFormat;
+import java.util.Scanner;
 
 /**
  * The Computer class is composed of registers, memory, PC, IR, and CC.
@@ -101,26 +101,36 @@ public class Computer {
 	private final HashMap<Integer, Runnable> trapInstr = new HashMap<>();
 
 	{
-		int OUT = 0x21;
-
 		instruction.put(0, this::executeBranch);
 		instruction.put(1, this::executeAdd);
 		instruction.put(2, this::executeLoad);
 		instruction.put(3, this::executeStore);
+      //instruction.put(4, this::executeJSR);
 		instruction.put(5, this::executeAnd);
+	  //instruction.put(6, this::executeLDR);
+	  //instruction.put(7, this::executeSTR);
 		instruction.put(9, this::executeNot);
+	  //instruction.put(10, this::executeLDI);
+	  //instruction.put(11, this::executeSTI);
+      //instruction.put(12, this::executeRET);
+		instruction.put(14, this::executeLEA);
+
+		int OUT = 0x21;
+		int GET_C = 0x20;
+		int PUTS = 0x22;
+		int IN = 0x23;
+		//int PUT_SP = 0x24;
         trapInstr.put(OUT, this::executeTrapOut);
-		//trapInstr.put(0x20, this::executeTrapGetC);
-		//trapInstr.put(0x22, this::executeTrapPutS);
-		//trapInstr.put(0x23, this::executeTrapIn);
-		//trapInstr.put(0x24, this::executeTrapPutSP;
+		trapInstr.put(GET_C, this::executeTrapGetC);
+		trapInstr.put(PUTS, this::executeTrapPutS);
+		trapInstr.put(IN, this::executeTrapIn);
+//		trapInstr.put(PUT_SP, this::executeTrapPutSP);
 	}
 
 	/**
 	 * Initialize all memory addresses to 0, registers to 0 to 7
 	 * PC, IR to 16-bits 0s and CC to 000.
 	 */
-
 	public Computer() {
 		mPC = new BitString();
 		mPC.setUnsignedValue(0); //creates a PC with [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
@@ -425,6 +435,18 @@ public class Computer {
 		setCC(getRegisters()[dr.getUnsignedValue()].get2sCompValue());
 	}
 
+	/**
+	 * Loads into R0 the effective address at the offset + PC + 1
+	 */
+	public void executeLEA() {
+		dr = getOperand("dr");
+		pos9 = getOperand("pos9");
+
+		//Loads into R0 the effective address at the 9-bit Offset + PC
+		mRegisters[0].setUnsignedValue(mPC.getUnsignedValue()
+				+ pos9.getUnsignedValue());
+	}
+
 
 	/**
 	 * Performs not operation by using the data from the source register (bits[8:6]) 
@@ -623,12 +645,72 @@ public class Computer {
 	}
 
 	/**
-	 * Displays the ASCII character from mRegister[0]
+	 * Displays the character from mRegister[0]
 	 */
 	private void executeTrapOut(){
-
 		char ascii = (char) getRegisters()[0].getUnsignedValue();
-
 		System.out.print(ascii);
+	}
+
+	/**
+	 * Echos the first character from the user input
+	 */
+	private void executeTrapGetC(){
+		System.out.print("> ");
+		Scanner sc = new Scanner(System.in);
+		char input = sc.next().charAt(0);
+		System.out.println(input);
+	}
+
+	/**
+	 * Echos the first character value from the user input and stores the value into R0
+	 */
+	private void executeTrapIn(){
+		System.out.print("Enter a character: ");
+		BitString userInput = new BitString();
+		Scanner sc = new Scanner(System.in);
+		char input = sc.next().charAt(0);
+		System.out.println(input);
+		userInput.setUnsignedValue(input);
+		mRegisters[0].setUnsignedValue(userInput.getUnsignedValue());
+    }
+
+	/**
+	 * Outputs the string into the console starting from the memory location stored in R0 and
+	 * traverses until the memory location has 0x0000
+	 */
+
+	private void executeTrapPutS(){
+		//Gets the stored memory location from R0 from LEA
+		int MemoryLocation = getRegisters()[0].getUnsignedValue();
+		char nullAscii = 0x0000;
+		char output = (char) mMemory[MemoryLocation].getUnsignedValue();
+		int incrementer = 1;
+
+		while(output != nullAscii){
+			System.out.print(output);
+			output = (char) mMemory[MemoryLocation + incrementer].getUnsignedValue();
+			incrementer++;
+		}
+	}
+
+	public static void main(String[] args) {
+		Computer mc = new Computer();
+//		mc.executeTrapGetC();
+//		mc.executeTrapIn();
+//		mc.display();
+		String[] program = {
+				"1110 000 0 0000 0010", //LEA
+				"1111 0000 0010 0010", //PUTS
+				"1111 0000 0010 0101", //HALT
+
+				"0000 0000 0100 1000", // 'H'
+				"0000 0000 0110 1001", // 'i'
+				"0000 0000 0000 1010", // 'lf'
+		};
+		mc.loadMachineCode(program);
+		mc.execute();
+		mc.display();
+
 	}
 }
