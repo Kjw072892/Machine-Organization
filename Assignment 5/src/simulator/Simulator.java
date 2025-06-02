@@ -79,8 +79,17 @@ public class Simulator {
 				"0000 001 1 1111 1101",   //; BRnzp do it again if the counter is not yet zero
 				"1111 0000 0010 0101"};  //; halt - TRAP with vector x25
 
-		execute(program);
+
+		String[] program2 = {
+				"0010 000 0 0000 0010", // R0 <- Memory[2] ASCII '?'
+				"1111 0000 0010 0001", // TRAP Out
+				"1111 0000 0010 0101", // TRAP Halt
+				"0000 0000 0011 1111" // ASCII '?'
+		};
+
+		//execute(program);
 		//execute(program1);
+		execute(program2);
 	}
 
 	/**
@@ -102,7 +111,7 @@ public class Simulator {
 
 		/* Show the final configuration of the computer. */
 		System.out.println();
-		myComputer.display();
+		//myComputer.display();
 
 	}
 

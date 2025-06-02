@@ -1,6 +1,8 @@
 package simulator;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HexFormat;
 
 /**
  * The Computer class is composed of registers, memory, PC, IR, and CC.
@@ -17,9 +19,14 @@ public class Computer {
 	private final static int MAX_MEMORY = 50;
 
 	/**
-	 * max number of usable registers
+	 * Max number of usable registers
 	 */
 	private final static int MAX_REGISTERS = 8;
+
+	/**
+	 * Max number of bits in an instruction
+	 */
+	private final static int MAX_BITS = 16;
 
 	/**
 	 * An array of size 8 where index 0 is R0 and index 7 is R7
@@ -52,7 +59,7 @@ public class Computer {
 	 */
 	private BitString dr;
 
-	/**
+    /**
 	 * Source Register 1
 	 */
 	private BitString sr1;
@@ -72,15 +79,42 @@ public class Computer {
 	 */
 	private BitString pos9;
 
+
     /**
-	 * 8-bit TRAP vector for 'halt'
+	 * HashMap, with the values set to a Runnable interface, allows for scalability for future
+	 * implementation of the computer class
+	 * <P>
+	 * Key: Opcode Decimal format
+	 * <p>
+	 * Value: of type Runnable-Interface with a .run() method call
 	 */
-	private final char[] haltBits = {'0','0','1','0','0','1','0','1'};
+	private final HashMap<Integer, Runnable> instruction = new HashMap<>();
 
 	/**
-	 * 8-bit TRAP vector for 'out'
+	 * HashMap, with the values set to a Runnable interface, allows for scalability for future
+	 * implementation of the computer class
+	 * <P>
+	 * Key: TRAP Operand Decimal format
+	 * <p>
+	 * Value: of type Runnable-Interface with a .run() method call
 	 */
-	private final char[] outBits = {'0','0','1','0','0','0','0','1'};
+	private final HashMap<Integer, Runnable> trapInstr = new HashMap<>();
+
+	{
+		int OUT = 0x21;
+
+		instruction.put(0, this::executeBranch);
+		instruction.put(1, this::executeAdd);
+		instruction.put(2, this::executeLoad);
+		instruction.put(3, this::executeStore);
+		instruction.put(5, this::executeAnd);
+		instruction.put(9, this::executeNot);
+        trapInstr.put(OUT, this::executeTrapOut);
+		//trapInstr.put(0x20, this::executeTrapGetC);
+		//trapInstr.put(0x22, this::executeTrapPutS);
+		//trapInstr.put(0x23, this::executeTrapIn);
+		//trapInstr.put(0x24, this::executeTrapPutSP;
+	}
 
 	/**
 	 * Initialize all memory addresses to 0, registers to 0 to 7
@@ -316,7 +350,8 @@ public class Computer {
 	 * and adding this value to the incremented PC.
 	 */
 	public void executeStore() {
-		sr1 = getOperand("dr");
+
+        BitString sr = getOperand("sr");
 		pos9 = getOperand("pos9");
 
 		if(pos9.get2sCompValue() + mPC.getUnsignedValue() > MAX_MEMORY - 1) {
@@ -326,21 +361,22 @@ public class Computer {
 		}
 
 		//Getting the value from the source register
-		char[] sr1Arr = getRegisters()[sr1.getUnsignedValue()].getBits();
-
+		char[] srArr = getRegisters()[sr.getUnsignedValue()].getBits();
 
 		//Storing the bits found in sr1 into the memory location via offset + PC
-		mMemory[mPC.getUnsignedValue() + pos9.get2sCompValue()].setBits(sr1Arr);
+		mMemory[mPC.getUnsignedValue() + pos9.get2sCompValue()].setBits(srArr);
 
 	}
 	
 	/**
 	 * op   dr  sr1      sr2
+	 * <p>
 	 * 0101 000 000 0 00 000
 	 * <p>
 	 * OR
 	 * <p>
 	 * op   dr  sr1   imm5
+	 * <p>
 	 * 0101 000 000 1 00000
 	 * <p>
 	 * If bit [5] is 0, the second source operand is obtained from SR2.
@@ -359,22 +395,22 @@ public class Computer {
 
 		boolean isImmediate = getIR().substring(10,1).getUnsignedValue() == 1;
 
-		char[] destR = new char[16];
-		char[] source1 = getRegisters()[sr1.getUnsignedValue()].getBits();
-		char[] source2 =getRegisters()[sr2.getUnsignedValue()].getBits();
+		char[] destR = new char[MAX_BITS];
+		char[] sourceReg1 = getRegisters()[sr1.getUnsignedValue()].getBits();
+		char[] sourceReg2 =getRegisters()[sr2.getUnsignedValue()].getBits();
 		char[] immediate = signExt(imm5.getBits());
 
 		//Checks if the two values are '1's
 		for(int i = 0; i < destR.length; i++) {
 			if (isImmediate) {
-				if (source1[i] == '1' && immediate[i] == '1') {
+				if (sourceReg1[i] == '1' && immediate[i] == '1') {
 					destR[i] = '1';
 				} else {
 					destR[i] = '0';
 				}
 
 			} else {
-				if (source1[i] == '1' && source2[i] == '1') {
+				if (sourceReg1[i] == '1' && sourceReg2[i] == '1') {
 					destR[i] = '1';
 				} else {
 					destR[i] = '0';
@@ -415,20 +451,20 @@ public class Computer {
 	 * @return true if this Trap is a HALT command; false otherwise.
 	 */
 	public boolean executeTrap() {
+
 		boolean halt = false;
-
-		// implement the TRAP instruction here
         BitString vector = getOperand("trap");
+		int decVector = vector.getUnsignedValue();
 
-
-		if(Arrays.equals(vector.getBits(), haltBits)) {
-			halt = true;
-
-		} else if(Arrays.equals(vector.getBits(), outBits)) {
-			char ascii = (char) getRegisters()[0].getUnsignedValue();
-			System.out.print(ascii);
-
+        if(decVector == 0x25) {
+			return true;
 		}
+
+		if(!trapInstr.containsKey(decVector)) {
+			throw new UnsupportedOperationException("This TRAP vector is not currently supported!");
+		}
+
+		trapInstr.get(decVector).run();
 
 		return halt;
 	}
@@ -441,36 +477,32 @@ public class Computer {
 	public void execute() {
 		BitString opCodeStr;
 		int opCode;
+		int trap = 15; //Decimal value for TRAP opCode
 		boolean halt = false;
 
 		while (!halt) {
 			// Fetch the next instruction
 			mIR = getMemory()[mPC.getUnsignedValue()];
+
 			// increment the PC
 			mPC.addOne();
 
-			// Decode the instruction's first 4 bits 
-			// to figure out the opcode
-			opCodeStr =getIR().substring(0, 4);
+			// Decode the instruction's first 4 bits to figure out the opcode
+			opCodeStr = getIR().substring(0, 4);
 			opCode = opCodeStr.getUnsignedValue();
 
-			// What instruction is this?
-			if (opCode == 0) { // BR
-				executeBranch();
-			} else if (opCode == 1) {  // ADD    0001
-				executeAdd();
-			} else if (opCode == 2) {  // LD     0010
-				executeLoad();
-			} else if (opCode == 3) {  // ST     0011
-				executeStore();
-			} else if (opCode == 5) {  // AND    0101
-				executeAnd();
-			} else if (opCode == 9) {  // NOT    1001
-				executeNot();
-			} else if (opCode == 15) { // TRAP   1111
+			//What instruction is this?
+			if (!instruction.containsKey(opCode) && opCode != trap) {
+				throw new UnsupportedOperationException("Illegal opCode: "
+						+ Arrays.toString(opCodeStr.getBits())+ " @ PC: "
+						+ getPC().getUnsignedValue());
+			}
+
+			if(opCode == trap){
 				halt = executeTrap();
+
 			} else {
-				throw new UnsupportedOperationException("Illegal opCode: " + opCode);
+				instruction.get(opCode).run();
 			}
 		}
 	}
@@ -548,14 +580,14 @@ public class Computer {
 
 		switch(operands.toLowerCase()){
 			case "nzp" -> result = mIR.substring(3,3);
-			case "dr" -> result = mIR.substring(4,3);
-			case "sr1" -> result = mIR.substring(7,3);
+			case "dr", "sr" -> result = mIR.substring(4,3);
+            case "sr1" -> result = mIR.substring(7,3);
 			case "pos9" -> result = mIR.substring(7,9);
 			case "trap" -> result = mIR.substring(8,8);
 			case "pos6" -> result = mIR.substring(10, 6);
 			case "imm5" -> result = mIR.substring(11,5);
 			case "sr2" -> result = mIR.substring(13,3);
-			default -> throw new IllegalArgumentException("Invalid operand");
+			default -> throw new UnsupportedOperationException("Invalid operand");
 		}
 
 		return result;
@@ -567,27 +599,36 @@ public class Computer {
 	 * @param operand char[] that needs a sign extension to 16-bits
 	 */
 	private char[] signExt(final char[] operand) {
-		int numOfBitsNeed = 16 - operand.length;
+		int numOfBitsNeed = MAX_BITS - operand.length;
 
 		char[] result = new char[operand.length + numOfBitsNeed];
 
 		int resultIndex = result.length - 1;
 		int arrIndex = operand.length - 1;
 
-		for(int i = 0; i < result.length; i++){
+		for(int i = 0; i < result.length; i++) {
 			if(i < operand.length ) {
 
 				result[resultIndex - i] = operand[arrIndex - i];
+			} else if(operand[0] == '1'){
 
-			} else {
-				if(operand[0] == '1'){
 				result[resultIndex - i] = '1';
-				} else {
-				result[resultIndex - i] = '0';
-				}
-			}
+			} else {
 
+				result[resultIndex - i] = '0';
+			}
 		}
+
 		return result;
+	}
+
+	/**
+	 * Displays the ASCII character from mRegister[0]
+	 */
+	private void executeTrapOut(){
+
+		char ascii = (char) getRegisters()[0].getUnsignedValue();
+
+		System.out.print(ascii);
 	}
 }

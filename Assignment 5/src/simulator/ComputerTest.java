@@ -36,12 +36,14 @@ class ComputerTest {
 	@Test
 	void testExecuteBranchNZP() {
 
+		//The expected condition code
+		char[] ccExpected = myComputer.getCC().getBits();
+
 		String[] programNzp = {
 				"0000 111 0 0000 0001",//BR pc + 1 (pc = 1)
 				"1111 0000 0010 0101",//TRAP HALT PC = 2
 				"1111 0000 0010 0101"//TRAP HALT PC = 3
 		};
-
 
 		myComputer.loadMachineCode(programNzp);
 		myComputer.execute();
@@ -50,7 +52,11 @@ class ComputerTest {
 		assertAll("Testing BRnzp instruction",
 				() -> assertEquals(3, myComputer.getPC().getUnsignedValue(),
 						"PC should have been 3. But your PC is at "
-								+ myComputer.getPC().getUnsignedValue() + "!")
+								+ myComputer.getPC().getUnsignedValue() + "!"),
+
+				//Tests if condition code changed because of the BR instruction
+				() -> assertArrayEquals(ccExpected, myComputer.getCC().getBits(),
+						"Your Condition Code was updated unexpectedly!")
 		);
 	}
 
@@ -59,6 +65,10 @@ class ComputerTest {
 	 */
 	@Test
 	void testExecuteBranchNegative() {
+
+		//The expected condition code
+		char[] ccExpected = myComputer.getCC().getBits();
+		ccExpected[0] = '1';
 
 		String[] programNegative = {
 				"1001 000 000 111111",//Not R0
@@ -74,7 +84,11 @@ class ComputerTest {
 
 		assertAll("Testing BRn instruction",
 				() -> assertEquals(4, myComputer.getPC().getUnsignedValue(),
-						"PC should have been 4. The PC offset is wrong!")
+						"PC should have been 4. The PC offset is wrong!"),
+
+				//Tests if condition code changed because of the BR instruction
+				() -> assertArrayEquals(ccExpected, myComputer.getCC().getBits(),
+						"Your Condition Code was updated unexpectedly!")
 		);
 	}
 
@@ -84,6 +98,9 @@ class ComputerTest {
 	@Test
 	void testExecuteBranchPositive() {
 
+		//The expected condition code
+		char[] ccExpected = myComputer.getCC().getBits();
+		ccExpected[2] = '1';
 
 		String[] programPositive = {
 				"1001 110 110 111111",//Not R6
@@ -99,7 +116,11 @@ class ComputerTest {
 
 		assertAll("Testing BRp instruction",
 				() -> assertEquals(5, myComputer.getPC().getUnsignedValue(),
-						"PC should have been 5. The PC offset is wrong!")
+						"PC should have been 5. The PC offset is wrong!"),
+
+				//Tests if condition code changed because of the BR instruction
+				() -> assertArrayEquals(ccExpected, myComputer.getCC().getBits(),
+						"Your Condition Code was updated unexpectedly!")
 		);
 	}
 	/**
@@ -107,6 +128,10 @@ class ComputerTest {
 	 */
 	@Test
 	void testExecuteBranchZero() {
+
+		//The expected condition code
+		char[] ccExpected = myComputer.getCC().getBits();
+		ccExpected[1] = '1';
 
 		String[] programZero = {
 				"1001 000 000 111111",//Not R0
@@ -122,7 +147,11 @@ class ComputerTest {
 
 		assertAll("Testing BRz instruction",
 				() -> assertEquals(5, myComputer.getPC().getUnsignedValue(),
-						"PC should have been 5. The PC offset is wrong!")
+						"PC should have been 5. The PC offset is wrong!"),
+
+				//Tests if condition code changed because of the BR instruction
+				() -> assertArrayEquals(ccExpected, myComputer.getCC().getBits(),
+						"Your Condition Code was updated unexpectedly!")
 		);
 	}
 
@@ -131,7 +160,10 @@ class ComputerTest {
 	 */
 	@Test
 	void testExecuteLoad() {
+
+		//The expected condition code
 		char[] ccExpected = myComputer.getCC().getBits();
+
 		ccExpected[0] = '1';
 		ccExpected[1] = '0';
 
@@ -149,8 +181,9 @@ class ComputerTest {
 		assertAll("Testing LD instruction",
 				() -> assertEquals(-39, myComputer.getRegisters()[0].get2sCompValue(),
 						"Register 0 should have had -39 loaded into it! But got "
-								+ myComputer.getRegisters()[0].get2sCompValue() + " " +
-								"instead!"),
+								+ myComputer.getRegisters()[0].get2sCompValue() + " " + "instead!"),
+
+				//Tests if condition code changed properly
 				() -> assertArrayEquals(ccExpected, myComputer.getCC().getBits(),
 						"Your Condition Code was not updated properly!")
 		);
@@ -162,11 +195,13 @@ class ComputerTest {
 	@Test
 	void testExecuteStore() {
 
+		//The expected condition code
 		char[] ccDefault = myComputer.getCC().getBits();
+
 		String[] program = {
-				"0011 111 0 0000 0001",//Memory[2] <- R7
+				"0011 111 0 0000 0001",//Memory[2] <- R7 (7)
 				"1111 0000 0010 0101",//TRAP HALT PC = 2
-				"0000 0000 0011 1001",//x39 (57)
+				"0000 0000 0011 1001",//x39 (57) Memory[2]
 		};
 
 
@@ -179,9 +214,9 @@ class ComputerTest {
 				() -> assertEquals(7, myComputer.getMemory()[2].get2sCompValue(),
 						"Memory location 2 should have had 7 loaded into it! But got"
 								+ " 57 instead!"),
-				//Checks if the condition code was changed from its default position
-				() -> assertArrayEquals(ccDefault,
-						myComputer.getCC().getBits(),
+
+				//Checks if the condition code was changed because of the ST instruction
+				() -> assertArrayEquals(ccDefault, myComputer.getCC().getBits(),
 						"Your Condition Code was updated unexpectedly!")
 		);
 	}
@@ -191,8 +226,12 @@ class ComputerTest {
 	 */
 	@Test
 	void testExecuteAnd() {
+
+		//The expected condition code
+		char[] expectedCC = new char[]{'0','0','1'};
+
 		String[] program = {
-				"0101 000 110 0 00 111",//R0 <- R6 + R7
+				"0101 000 110 0 00 111",//R0 <- R6 & R7
 				"1111 0000 0010 0101",//TRAP HALT PC = 2
 		};
 
@@ -202,12 +241,10 @@ class ComputerTest {
 
 		assertAll("Testing AND instruction",
 				() -> assertEquals(6, myComputer.getRegisters()[0].get2sCompValue(),
-
-
-
-
 						"Your AND instruction is incorrect!"),
-				() -> assertArrayEquals(new char[]{'0','0','1'}, myComputer.getCC().getBits(),
+
+				//Tests if condition code was set properly
+				() -> assertArrayEquals(expectedCC, myComputer.getCC().getBits(),
 						"Your Condition Code did not update correctly!")
 		);
 	}
@@ -246,9 +283,10 @@ class ComputerTest {
 	@Test
 	void testExecuteAddR2PlusR2() {
 		
-		String[] program =
-			{"0001 000 010 0 00 010",  // R0 <- R2 + R2 (#4)
-		     "1111 0000 0010 0101"}; // HALT
+		String[] program = {
+				"0001 000 010 0 00 010",  // R0 <- R2 + R2 (#4)
+		     	"1111 0000 0010 0101" // HALT
+		};
 		
 		myComputer.loadMachineCode(program);
 		myComputer.execute();
@@ -269,9 +307,10 @@ class ComputerTest {
 	@Test
 	void testExecuteAddR2PlusImm3() {
 		
-		String[] program =
-			{"0001 000 010 1 00011",  // R0 <- R2 + #3
-		     "1111 0000 0010 0101"}; // HALT
+		String[] program = {
+				"0001 000 010 1 00011",  // R0 <- R2 + #3
+		     	"1111 0000 0010 0101"  // HALT
+		};
 		
 		myComputer.loadMachineCode(program);
 		myComputer.execute();
@@ -292,9 +331,10 @@ class ComputerTest {
 	@Test
 	void testExecuteAddR2PlusImmNeg3() {
 		
-		String[] program =
-			{"0001 000 010 1 11101",  // R0 <- R2 + #-3
-		     "1111 0000 0010 0101"}; // HALT
+		String[] program = {
+				"0001 000 010 1 11101",  // R0 <- R2 + #-3
+		     	"1111 0000 0010 0101" // HALT
+		};
 		
 		myComputer.loadMachineCode(program);
 		myComputer.execute();
