@@ -81,20 +81,20 @@ public class Computer {
 
 
     /**
-	 * HashMap, with the values set to a Runnable interface, allows for scalability for future
-	 * implementation of the computer class
+	 * HashMap, with the values being of a Runnable interface, allows for scalability for
+	 * future implementation of the computer class
 	 * <P>
-	 * Key: Opcode Decimal format
+	 * Key: Opcode Decimal
 	 * <p>
 	 * Value: of type Runnable-Interface with a .run() method call
 	 */
 	private final HashMap<Integer, Runnable> instruction = new HashMap<>();
 
 	/**
-	 * HashMap, with the values set to a Runnable interface, allows for scalability for future
-	 * implementation of the computer class
+	 * HashMap, with the values being of a Runnable interface, allows for scalability for
+	 * future implementation of the computer class
 	 * <P>
-	 * Key: TRAP Operand Decimal format
+	 * Key: TRAP Operand Decimal
 	 * <p>
 	 * Value: of type Runnable-Interface with a .run() method call
 	 */
@@ -115,8 +115,8 @@ public class Computer {
       //instruction.put(12, this::executeRET);
 		instruction.put(14, this::executeLEA);
 
-		int OUT = 0x21;
 		int GET_C = 0x20;
+		int OUT = 0x21;
 		int PUTS = 0x22;
 		int IN = 0x23;
 		//int PUT_SP = 0x24;
@@ -129,7 +129,7 @@ public class Computer {
 
 	/**
 	 * Initialize all memory addresses to 0, registers to 0 to 7
-	 * PC, IR to 16-bits 0s and CC to 000.
+	 * PC, IR to 16-bits 0's and CC to 000.
 	 */
 	public Computer() {
 		mPC = new BitString();
@@ -228,7 +228,7 @@ public class Computer {
 		if (theInstruction.length == 0 || theInstruction.length >= MAX_MEMORY) {
 			throw new IllegalArgumentException("Invalid words");
 		}
-		for (int i = 0; i < theInstruction.length; i++) {
+		for(int i = 0; i < theInstruction.length; i++) {
 			final BitString instruction = new BitString();
 			input[i] = input[i].replace("_", "");
 			input[i] = input[i].replace(" ", "");
@@ -237,10 +237,6 @@ public class Computer {
 			loadWord(i, instruction);
 		}
 	}
-	
-
-	// The next 6 methods are used to execute the required instructions:
-	// BR, ADD, LD, ST, AND, NOT, TRAP
 	
 	/**
 	 * <P>
@@ -255,10 +251,10 @@ public class Computer {
 	 * If any of the condition codes tested is 1, the program branches to the memory location specified by
 	 * adding the sign-extended PcOffset9 field to the incremented PC.
 	 */
-	public void executeBranch() {
+	private void executeBranch() {
 
-		BitString nzp = getIR().substring(4, 3);
-		pos9 = getOperand("pos9");
+		BitString nzp = getIR().substring(4, 3); // Gets substring for NZP
+		pos9 = getOperand("pos9"); // 9-bit pc offset
 
 		int decOffSet = pos9.get2sCompValue();
 		int currentPC = getPC().getUnsignedValue();
@@ -267,17 +263,20 @@ public class Computer {
 				|| nzp.getBits()[1] == '1' && getCC().getBits()[1] == '1'
 				|| nzp.getBits()[2] == '1' && getCC().getBits()[2] == '1';
 
-		if(currentPC + decOffSet < 0 || currentPC + decOffSet > 49) {
+		if (currentPC + decOffSet < 0 || currentPC + decOffSet > 49) {
 				throw new OutOfMemoryError("Your BR 9-bit offset falls outside the "
 						+ "scope of your program! Please readjust your 9-bit offset at PC "
 						+ getPC().getUnsignedValue());
 		}
 
-		if(conditionalBranch) {
+		// Only branches if the condition code matches with the NZP
+		if (conditionalBranch) {
 
 			mPC.set2sCompValue(decOffSet + currentPC);
 
-		} else if(unconditionalBranch) {
+		// Ensures that the BR instruction executes regardless of the CC value
+			// (even if CC is undefined)
+		} else if (unconditionalBranch) {
 
 			mPC.set2sCompValue(decOffSet + currentPC);
 		}
@@ -285,7 +284,7 @@ public class Computer {
 	}
 	
 	/**
-	 * op dr sr1 sr2
+	 * OP dr sr1 sr2
 	 * 0001 000 000 0 00 000
 	 * OR
 	 * op dr sr1 imm5
@@ -296,7 +295,7 @@ public class Computer {
 	 * result stored in DR. The condition codes are set, based on whether the result is
 	 * negative, zero, or positive.
 	 */
-	public void executeAdd() {
+	private void executeAdd() {
 
 		dr = getOperand("dr");
 		sr1 =  getOperand("sr1");
@@ -305,7 +304,7 @@ public class Computer {
 
 		boolean isImmediate = getIR().substring(10,1).getUnsignedValue() == 1;
 
-		if(isImmediate) {
+		if (isImmediate) {
 			int totalWithImm5 = getRegisters()[sr1.getUnsignedValue()].get2sCompValue()
 				+ imm5.get2sCompValue();
 
@@ -316,7 +315,7 @@ public class Computer {
 					new char[]{'0','0','0'});
 
 			//Throws exception if the bits [5:3] are not zeros
-			if(!isSource2) {
+			if (!isSource2) {
 				throw new UnsupportedOperationException("Incorrect bits at [5:3] on ADD " +
 						"instruction on PC " + getPC().getUnsignedValue());
 			}
@@ -336,7 +335,7 @@ public class Computer {
 	 * into DR - bits [11:9]
 	 * then sets CC.
 	 */
-	public void executeLoad() {
+	private void executeLoad() {
 		dr = getOperand("dr");
 		pos9 = getOperand("pos9");
 
@@ -359,12 +358,13 @@ public class Computer {
 	 * in the memory location whose address is computed by sign-extending bits [8:0] to 16 bits
 	 * and adding this value to the incremented PC.
 	 */
-	public void executeStore() {
+	private void executeStore() {
 
         BitString sr = getOperand("sr");
 		pos9 = getOperand("pos9");
 
-		if(pos9.get2sCompValue() + mPC.getUnsignedValue() > MAX_MEMORY - 1) {
+		if (pos9.get2sCompValue() + mPC.getUnsignedValue() > MAX_MEMORY - 1) {
+
 			throw new OutOfMemoryError("Your ST 9-bit offset falls outside the "
 						+ "scope of your program! Please readjust your 9-bit offset at PC "
 						+ getPC().getUnsignedValue());
@@ -396,7 +396,7 @@ public class Computer {
 	 * The condition codes are set, based on whether the binary value produced, taken as a 2’s complement integer,
 	 * is negative, zero, or positive.
 	 */
-	public void executeAnd() {
+	private void executeAnd() {
 
 		dr = getOperand("dr");
 		sr1 = getOperand("sr1");
@@ -436,9 +436,9 @@ public class Computer {
 	}
 
 	/**
-	 * Loads into R0 the effective address at the offset + PC + 1
+	 * Loads into R0 the effective address at the offset + PC
 	 */
-	public void executeLEA() {
+	private void executeLEA() {
 		dr = getOperand("dr");
 		pos9 = getOperand("pos9");
 
@@ -453,7 +453,7 @@ public class Computer {
 	 * and inverting and storing in the destination register (bits[11:9]).
 	 * Then sets CC.
 	 */
-	public void executeNot() {
+	private void executeNot() {
 		dr = getOperand("dr");
 		sr1 = getOperand("sr1");
 
@@ -467,26 +467,32 @@ public class Computer {
 	
 	/**
 	 * Executes the trap operation by checking the vector (bits [7:0]
+	 * <P>
+	 * vector x20 - GETC
+	 * <P>
 	 * vector x21 - OUT
+	 * <P>
+	 * vector x22 - PUTS
+	 * <P>
+	 * vector x23 - IN
+	 * <P>
 	 * vector x25 - HALT
 	 * 
 	 * @return true if this Trap is a HALT command; false otherwise.
 	 */
-	public boolean executeTrap() {
+	private boolean executeTrap() {
+		BitString vector = getOperand("trap");
+		int decVector = vector.getUnsignedValue();// The vector operand
+		int trapHalt = 0x25; // The halt vector
+		boolean halt = trapHalt == decVector; // return true if vector operand is HALT
 
-		boolean halt = false;
-        BitString vector = getOperand("trap");
-		int decVector = vector.getUnsignedValue();
-
-        if(decVector == 0x25) {
-			return true;
-		}
-
-		if(!trapInstr.containsKey(decVector)) {
+		if (!trapInstr.containsKey(decVector) && decVector != trapHalt) {
 			throw new UnsupportedOperationException("This TRAP vector is not currently supported!");
 		}
 
-		trapInstr.get(decVector).run();
+		if (!halt) {
+			trapInstr.get(decVector).run();
+		}
 
 		return halt;
 	}
@@ -502,7 +508,7 @@ public class Computer {
 		int trap = 15; //Decimal value for TRAP opCode
 		boolean halt = false;
 
-		while (!halt) {
+		while(!halt) {
 			// Fetch the next instruction
 			mIR = getMemory()[mPC.getUnsignedValue()];
 
@@ -520,7 +526,7 @@ public class Computer {
 						+ getPC().getUnsignedValue());
 			}
 
-			if(opCode == trap){
+			if (opCode == trap){
 				halt = executeTrap();
 
 			} else {
@@ -545,7 +551,7 @@ public class Computer {
 		System.out.print("CC ");
 		getCC().display(true);
 		System.out.println("   ");
-		for (int i = 0; i < MAX_REGISTERS; i++) {
+		for(int i = 0; i < MAX_REGISTERS; i++) {
 			System.out.printf("R%d ", i);
 			getRegisters()[i].display(true);
 			if (i % 3 == 2) {
@@ -555,7 +561,7 @@ public class Computer {
 			}
 		}
 		System.out.println();
-		for (int i = 0; i < MAX_MEMORY; i++) {
+		for(int i = 0; i < MAX_MEMORY; i++) {
 			System.out.printf("%3d ", i);
 			getMemory()[i].display(true);
 			if (i % 3 == 2) {
@@ -578,13 +584,13 @@ public class Computer {
 		char[] positiveCC = {'0','0','1'};
 		char[] zeroCC = {'0','1','0'};
 
-		if(arg < 0) {
+		if (arg < 0) {
 			mCC.setBits(negativeCC);
 
-		}else if(arg > 0) {
+		} else if (arg > 0) {
 			mCC.setBits(positiveCC);
 
-		}else {
+		} else {
 			mCC.setBits(zeroCC);
 		}
 
@@ -629,10 +635,10 @@ public class Computer {
 		int arrIndex = operand.length - 1;
 
 		for(int i = 0; i < result.length; i++) {
-			if(i < operand.length ) {
+			if (i < operand.length ) {
 
 				result[resultIndex - i] = operand[arrIndex - i];
-			} else if(operand[0] == '1'){
+			} else if (operand[0] == '1'){
 
 				result[resultIndex - i] = '1';
 			} else {
@@ -669,8 +675,8 @@ public class Computer {
 		System.out.print("Enter a character: ");
 		BitString userInput = new BitString();
 		Scanner sc = new Scanner(System.in);
-		char input = sc.next().charAt(0);
-		System.out.println(input);
+		char input = sc.next().charAt(0);//only stores the first character into input
+		System.out.print(input);
 		userInput.setUnsignedValue(input);
 		mRegisters[0].setUnsignedValue(userInput.getUnsignedValue());
     }
@@ -687,30 +693,10 @@ public class Computer {
 		char output = (char) mMemory[MemoryLocation].getUnsignedValue();
 		int incrementer = 1;
 
-		while(output != nullAscii){
+		while(output != nullAscii) {
 			System.out.print(output);
 			output = (char) mMemory[MemoryLocation + incrementer].getUnsignedValue();
 			incrementer++;
 		}
-	}
-
-	public static void main(String[] args) {
-		Computer mc = new Computer();
-//		mc.executeTrapGetC();
-//		mc.executeTrapIn();
-//		mc.display();
-		String[] program = {
-				"1110 000 0 0000 0010", //LEA
-				"1111 0000 0010 0010", //PUTS
-				"1111 0000 0010 0101", //HALT
-
-				"0000 0000 0100 1000", // 'H'
-				"0000 0000 0110 1001", // 'i'
-				"0000 0000 0000 1010", // 'lf'
-		};
-		mc.loadMachineCode(program);
-		mc.execute();
-		mc.display();
-
 	}
 }
