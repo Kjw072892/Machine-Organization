@@ -120,13 +120,13 @@ public class Computer {
         instruction.put(12, this::executeRET);
 		instruction.put(14, this::executeLEA);
 
-		int GET_C = 0x20;
+		int GETC = 0x20;
 		int OUT = 0x21;
 		int PUTS = 0x22;
 		int IN = 0x23;
 		//int PUT_SP = 0x24;
         trapInstr.put(OUT, this::executeTrapOut);
-		trapInstr.put(GET_C, this::executeTrapGetC);
+		trapInstr.put(GETC, this::executeTrapGetC);
 		trapInstr.put(PUTS, this::executeTrapPutS);
 		trapInstr.put(IN, this::executeTrapIn);
 //		trapInstr.put(PUT_SP, this::executeTrapPutSP);
@@ -517,15 +517,15 @@ public class Computer {
 	/**
 	 * Executes the trap operation by checking the vector (bits [7:0]
 	 * <P>
-	 * vector x20 - GETC
+	 * Vector x20 - GETC
 	 * <P>
-	 * vector x21 - OUT
+	 * Vector x21 - OUT
 	 * <P>
-	 * vector x22 - PUTS
+	 * Vector x22 - PUTS
 	 * <P>
-	 * vector x23 - IN
+	 * Vector x23 - IN
 	 * <P>
-	 * vector x25 - HALT
+	 * Vector x25 - HALT
 	 * 
 	 * @return true if this Trap is a HALT command; false otherwise.
 	 */
@@ -746,11 +746,4 @@ public class Computer {
 			incrementer++;
 		}
 	}
-
-	public static void main(String[] args) {
-		Computer mc = new Computer();
-
-
-	}
-
 }
