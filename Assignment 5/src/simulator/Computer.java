@@ -329,6 +329,7 @@ public class Computer {
 
 		if (isImmediate) {
 			imm5 =  getOperand("imm5");
+
 			int totalWithImm5 = getRegisters()[sr1.getUnsignedValue()].get2sCompValue()
 				+ imm5.get2sCompValue();
 
@@ -507,7 +508,7 @@ public class Computer {
 	}
 
 	/**
-	 * Retrieves the store PC from R7 and sets the PC back to it
+	 * Retrieves the stored PC from R7 and sets the current PC back to it
 	 */
 	private void executeRET() {
 		mPC.setUnsignedValue(mRegisters[7].getUnsignedValue());
