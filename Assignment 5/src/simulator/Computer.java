@@ -139,7 +139,7 @@ public class Computer {
 		mIR.setUnsignedValue(0); //creates an IR with [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 
 		mCC = new BitString();
-		mCC.setBits(new char[]{'0', '0', '0'}); //LC-3 defaults to CC: Z on startup
+		mCC.setBits(new char[]{'0', '1', '0'}); //LC-3 defaults to CC: Z on startup
 		// [[1,0,0] -> negative], [[0,1,0] -> zero], [[0,0,1] -> positive]
 
 		mRegisters = new BitString[MAX_REGISTERS];
@@ -223,17 +223,17 @@ public class Computer {
 	 * @param theInstruction the Strings that contain the instructions or data.
 	 */
 	public void loadMachineCode(final String ... theInstruction) {
-		String[] input = theInstruction.clone();
 
 		if (theInstruction.length == 0 || theInstruction.length >= MAX_MEMORY) {
 			throw new IllegalArgumentException("Invalid words");
 		}
+
 		for(int i = 0; i < theInstruction.length; i++) {
 			final BitString instruction = new BitString();
-			input[i] = input[i].replace("_", "");
-			input[i] = input[i].replace(" ", "");
-			input[i] = input[i].replace("-","");
-			instruction.setBits(input[i].toCharArray());
+			theInstruction[i] = theInstruction[i].replace("_", "");
+			theInstruction[i] = theInstruction[i].replace(" ", "");
+			theInstruction[i] = theInstruction[i].replace("-","");
+			instruction.setBits(theInstruction[i].toCharArray());
 			loadWord(i, instruction);
 		}
 	}
@@ -299,18 +299,19 @@ public class Computer {
 
 		dr = getOperand("dr");
 		sr1 =  getOperand("sr1");
-		sr2 =  getOperand("sr2");
-		imm5 =  getOperand("imm5");
 
 		boolean isImmediate = getIR().substring(10,1).getUnsignedValue() == 1;
 
 		if (isImmediate) {
+			imm5 =  getOperand("imm5");
 			int totalWithImm5 = getRegisters()[sr1.getUnsignedValue()].get2sCompValue()
 				+ imm5.get2sCompValue();
 
 			mRegisters[dr.getUnsignedValue()].set2sCompValue(totalWithImm5);
 
 		} else {
+			sr2 =  getOperand("sr2");
+
 			boolean isSource2 = Arrays.equals(getIR().substring(10, 3).getBits(),
 					new char[]{'0','0','0'});
 
@@ -341,7 +342,7 @@ public class Computer {
 
 		int targetPc = pos9.get2sCompValue() + getPC().getUnsignedValue();
 
-		if (targetPc > MAX_MEMORY - 1) {
+		if (targetPc > MAX_MEMORY) {
 			throw new OutOfMemoryError("Your LD 9-bit offset falls outside the "
 						+ "scope of your program! Please readjust your 9-bit offset at PC "
 						+ getPC().getUnsignedValue());
@@ -363,7 +364,8 @@ public class Computer {
         BitString sr = getOperand("sr");
 		pos9 = getOperand("pos9");
 
-		if (pos9.get2sCompValue() + mPC.getUnsignedValue() > MAX_MEMORY - 1) {
+		if (pos9.get2sCompValue() + mPC.getUnsignedValue() > MAX_MEMORY
+				|| pos9.get2sCompValue() + mPC.getUnsignedValue() < 0) {
 
 			throw new OutOfMemoryError("Your ST 9-bit offset falls outside the "
 						+ "scope of your program! Please readjust your 9-bit offset at PC "
@@ -375,7 +377,6 @@ public class Computer {
 
 		//Storing the bits found in sr1 into the memory location via offset + PC
 		mMemory[mPC.getUnsignedValue() + pos9.get2sCompValue()].setBits(srArr);
-
 	}
 	
 	/**
@@ -407,12 +408,11 @@ public class Computer {
 
 		char[] destR = new char[MAX_BITS];
 		char[] sourceReg1 = getRegisters()[sr1.getUnsignedValue()].getBits();
-		char[] sourceReg2 =getRegisters()[sr2.getUnsignedValue()].getBits();
-		char[] immediate = signExt(imm5.getBits());
 
 		//Checks if the two values are '1's
 		for(int i = 0; i < destR.length; i++) {
 			if (isImmediate) {
+				char[] immediate = signExt(imm5.getBits());
 				if (sourceReg1[i] == '1' && immediate[i] == '1') {
 					destR[i] = '1';
 				} else {
@@ -420,6 +420,7 @@ public class Computer {
 				}
 
 			} else {
+				char[] sourceReg2 = getRegisters()[sr2.getUnsignedValue()].getBits();
 				if (sourceReg1[i] == '1' && sourceReg2[i] == '1') {
 					destR[i] = '1';
 				} else {
@@ -442,8 +443,8 @@ public class Computer {
 		dr = getOperand("dr");
 		pos9 = getOperand("pos9");
 
-		//Loads into R0 the effective address at the 9-bit Offset + PC
-		mRegisters[0].setUnsignedValue(mPC.getUnsignedValue()
+		//Loads into the destination register the effective address at the 9-bit Offset + PC
+		mRegisters[dr.getUnsignedValue()].setUnsignedValue(mPC.getUnsignedValue()
 				+ pos9.getUnsignedValue());
 	}
 
@@ -580,17 +581,17 @@ public class Computer {
 	 *        	  code.
 	 */
 	private void setCC(final int arg){
-		char[] negativeCC = {'1','0','0'};
-		char[] positiveCC = {'0','0','1'};
-		char[] zeroCC = {'0','1','0'};
 
 		if (arg < 0) {
+			char[] negativeCC = {'1','0','0'};
 			mCC.setBits(negativeCC);
 
 		} else if (arg > 0) {
+			char[] positiveCC = {'0','0','1'};
 			mCC.setBits(positiveCC);
 
 		} else {
+			char[] zeroCC = {'0','1','0'};
 			mCC.setBits(zeroCC);
 		}
 
@@ -627,11 +628,11 @@ public class Computer {
 	 * @param operand char[] that needs a sign extension to 16-bits
 	 */
 	private char[] signExt(final char[] operand) {
-		int numOfBitsNeed = MAX_BITS - operand.length;
 
-		char[] result = new char[operand.length + numOfBitsNeed];
+		char[] result = new char[MAX_BITS];
 
 		int resultIndex = result.length - 1;
+
 		int arrIndex = operand.length - 1;
 
 		for(int i = 0; i < result.length; i++) {
@@ -665,20 +666,18 @@ public class Computer {
 		System.out.print("> ");
 		Scanner sc = new Scanner(System.in);
 		char input = sc.next().charAt(0);
-		System.out.println(input);
+		mRegisters[0].setUnsignedValue(input);
 	}
 
 	/**
 	 * Echos the first character value from the user input and stores the value into R0
 	 */
 	private void executeTrapIn(){
-		System.out.print("Enter a character: ");
-		BitString userInput = new BitString();
+		System.out.print("Input a character: ");
 		Scanner sc = new Scanner(System.in);
 		char input = sc.next().charAt(0);//only stores the first character into input
 		System.out.print(input);
-		userInput.setUnsignedValue(input);
-		mRegisters[0].setUnsignedValue(userInput.getUnsignedValue());
+		mRegisters[0].setUnsignedValue(input);
     }
 
 	/**
@@ -699,4 +698,11 @@ public class Computer {
 			incrementer++;
 		}
 	}
+
+	public static void main(String[] args) {
+		Computer mc = new Computer();
+
+
+	}
+
 }

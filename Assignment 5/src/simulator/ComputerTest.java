@@ -30,9 +30,7 @@ class ComputerTest {
 	 * with a comment for each line.
 	 */
 
-	/**
-	 * Test method for {@link simulator.Computer#executeBranch()}.
-	 */
+	/// Test method for [#executeBranch()].
 	@Test
 	void testExecuteBranchNZP() {
 
@@ -41,8 +39,8 @@ class ComputerTest {
 
 		String[] programNzp = {
 				"0000 111 0 0000 0001",//BR pc + 1 (pc = 1)
-				"1111 0000 0010 0101",//TRAP HALT PC = 2
-				"1111 0000 0010 0101"//TRAP HALT PC = 3
+				"1111 0000 0010 0101",//TRAP HALT (PC = 2)
+				"1111 0000 0010 0101"//TRAP HALT (PC = 3)
 		};
 
 		myComputer.loadMachineCode(programNzp);
@@ -69,6 +67,7 @@ class ComputerTest {
 		//The expected condition code
 		char[] ccExpected = myComputer.getCC().getBits();
 		ccExpected[0] = '1';
+		ccExpected[1] = '0';
 
 		String[] programNegative = {
 				"1001 000 000 111111",//Not R0
@@ -79,7 +78,7 @@ class ComputerTest {
 
 		myComputer.loadMachineCode(programNegative);
 		myComputer.execute();
-		//myComputer.display();
+		myComputer.display();
 
 
 		assertAll("Testing BRn instruction",
@@ -101,6 +100,7 @@ class ComputerTest {
 		//The expected condition code
 		char[] ccExpected = myComputer.getCC().getBits();
 		ccExpected[2] = '1';
+		ccExpected[1] = '0';
 
 		String[] programPositive = {
 				"1001 110 110 111111",//Not R6

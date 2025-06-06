@@ -33,7 +33,7 @@ public class Simulator {
 		 */
 
 		String[] program = {
-			"0010000000001000",  // LD into R0 x39 which is ASCII 9
+			"0010_0000_0000_1000",  // LD into R0 x39 which is ASCII 9
 			"0010001000001000",  // LD into R1 x-30
 			"0001010000000001",  // ADD R2 <- R0 + R1 ; #9 ; R2 is the counter
 			"0000010000000100",  // BR if zero skip down to code after the loop
@@ -89,7 +89,7 @@ public class Simulator {
 
 		//execute(program);
 		//execute(program1);
-		execute(program2);
+		execute(program);
 	}
 
 	/**
