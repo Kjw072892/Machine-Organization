@@ -59,6 +59,11 @@ public class Computer {
 	 */
 	private BitString dr;
 
+	/**
+	 * Source Register
+	 */
+	private BitString sr;
+
     /**
 	 * Source Register 1
 	 */
@@ -105,14 +110,14 @@ public class Computer {
 		instruction.put(1, this::executeAdd);
 		instruction.put(2, this::executeLoad);
 		instruction.put(3, this::executeStore);
-      //instruction.put(4, this::executeJSR);
+        instruction.put(4, this::executeJSR);
 		instruction.put(5, this::executeAnd);
 	  //instruction.put(6, this::executeLDR);
-	  //instruction.put(7, this::executeSTR);
+	    instruction.put(7, this::executeSTR);
 		instruction.put(9, this::executeNot);
 	  //instruction.put(10, this::executeLDI);
 	  //instruction.put(11, this::executeSTI);
-      //instruction.put(12, this::executeRET);
+        instruction.put(12, this::executeRET);
 		instruction.put(14, this::executeLEA);
 
 		int GET_C = 0x20;
@@ -282,6 +287,26 @@ public class Computer {
 		}
 
 	}
+
+	/**
+	 * Jumps to a subroutine at the PC + 11-bit offset
+	 */
+	private void executeJSR() {
+		BitString pos11 = getIR().substring(5,11);
+
+		if (pos11.get2sCompValue() + getPC().getUnsignedValue() > MAX_MEMORY
+				|| pos11.get2sCompValue() + getPC().getUnsignedValue() < 0) {
+			throw new OutOfMemoryError("Your BR 11-bit offset falls outside the "
+					+ "scope of your program! Please readjust your 11-bit offset at PC "
+					+ getPC().getUnsignedValue());
+		}
+
+		//Stores the current PC into R7
+		mRegisters[7].setUnsignedValue(getPC().getUnsignedValue());
+
+		//Sets PC to the PC + 11-bit Offset
+		mPC.setUnsignedValue(mPC.getUnsignedValue() + pos11.get2sCompValue());
+	}
 	
 	/**
 	 * OP dr sr1 sr2
@@ -356,12 +381,12 @@ public class Computer {
 	
 	/**
 	 * Store the contents of the register specified by SR
-	 * in the memory location whose address is computed by sign-extending bits [8:0] to 16 bits
+	 * to in the memory location whose address is computed by sign-extending bits [8:0] to 16 bits
 	 * and adding this value to the incremented PC.
 	 */
 	private void executeStore() {
 
-        BitString sr = getOperand("sr");
+        sr = getOperand("sr");
 		pos9 = getOperand("pos9");
 
 		if (pos9.get2sCompValue() + mPC.getUnsignedValue() > MAX_MEMORY
@@ -377,6 +402,21 @@ public class Computer {
 
 		//Storing the bits found in sr1 into the memory location via offset + PC
 		mMemory[mPC.getUnsignedValue() + pos9.get2sCompValue()].setBits(srArr);
+	}
+
+	/**
+	 * Store the contents of the register specified by SR
+	 * into the memory address stored in the BaseR register + the 6-bit PC Offset
+	 * <P>
+	 * 0111-SR-BaseR-Offset6
+	 */
+	private void executeSTR() {
+		sr = getOperand("sr");
+		BitString br = getOperand("br"); //The base register that has the memory address
+		BitString pos6 = getOperand("pos6");//6-bit offset
+		int locationIndex = br.getUnsignedValue() + pos6.get2sCompValue();
+
+		mMemory[locationIndex].setBits(sr.getBits());
 	}
 	
 	/**
@@ -464,6 +504,13 @@ public class Computer {
 		//set Condition Code
 		setCC(mRegisters[dr.getUnsignedValue()].get2sCompValue());
 
+	}
+
+	/**
+	 * Retrieves the store PC from R7 and sets the PC back to it
+	 */
+	private void executeRET() {
+		mPC.setUnsignedValue(mRegisters[7].getUnsignedValue());
 	}
 	
 	/**
@@ -600,7 +647,7 @@ public class Computer {
 	/**
 	 * Input the operand you want and the output will be a BitString object of that operand.
 	 *
-	 * @param operands 'sr1', 'nzp', 'sr2', 'dr', 'imm5', 'pos9', 'pos6','trap'
+	 * @param operands 'sr', 'sr1','sr2', 'imm5', 'nzp', 'dr', 'pos9', 'pos6','trap', 'br'
 	 *
 	 * @return Substring of the BitString object for the operand
 	 */
@@ -610,7 +657,7 @@ public class Computer {
 		switch(operands.toLowerCase()){
 			case "nzp" -> result = mIR.substring(3,3);
 			case "dr", "sr" -> result = mIR.substring(4,3);
-            case "sr1" -> result = mIR.substring(7,3);
+            case "sr1", "br" -> result = mIR.substring(7,3);
 			case "pos9" -> result = mIR.substring(7,9);
 			case "trap" -> result = mIR.substring(8,8);
 			case "pos6" -> result = mIR.substring(10, 6);
